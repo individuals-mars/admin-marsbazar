@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  prefersdark: true;
+  color-scheme: "light";
+
+  --color-base-100: oklch(98% 0 0);
+  --color-base-200: oklch(96% 0.001 286.375);
+  --color-base-300: oklch(92% 0.004 286.32);
+  --color-base-content: oklch(21% 0.006 285.885);
+
+  --color-primary: oklch(55% 0.288 130);
+  --color-primary-content: oklch(97% 0.014 130);
+
+  --color-secondary: oklch(58% 0.20 270);
+  --color-secondary-content: oklch(98% 0.015 270);
+
+  --color-accent: oklch(60% 0.18 110);
+  --color-accent-content: oklch(98% 0.014 110);
+
+  --color-neutral: oklch(37% 0.013 285.805);
+  --color-neutral-content: oklch(98% 0 0);
+
+  --color-info: oklch(62% 0.214 259.815);
+  --color-info-content: oklch(97% 0.014 254.604);
+
+  --color-success: oklch(76% 0.233 130.85);
+  --color-success-content: oklch(98% 0.031 120.757);
+
+  --color-warning: oklch(70% 0.213 47.604);
+  --color-warning-content: oklch(98% 0.016 73.684);
+
+  --color-error: oklch(64% 0.246 16.439);
+  --color-error-content: oklch(96% 0.015 12.422);
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  color-scheme: "dark";
+
+  --color-base-100: oklch(12% 0.01 270);
+  --color-base-200: oklch(16% 0.01 270);
+  --color-base-300: oklch(22% 0.01 270);
+  --color-base-content: oklch(92% 0.01 270);
+
+  --color-primary: oklch(60% 0.26 130);
+  --color-primary-content: oklch(98% 0.01 130);
+
+  --color-secondary: oklch(63% 0.18 250);
+  --color-secondary-content: oklch(96% 0.015 250);
+
+  --color-accent: oklch(70% 0.22 110);
+  --color-accent-content: oklch(10% 0 0);
+
+  --color-neutral: oklch(24% 0.01 270);
+  --color-neutral-content: oklch(96% 0 0);
+
+  --color-info: oklch(70% 0.18 260);
+  --color-info-content: oklch(10% 0 0);
+
+  --color-success: oklch(72% 0.22 135);
+  --color-success-content: oklch(12% 0 0);
+
+  --color-warning: oklch(78% 0.22 50);
+  --color-warning-content: oklch(15% 0 0);
+
+  --color-error: oklch(64% 0.28 15);
+  --color-error-content: oklch(10% 0 0);
+}

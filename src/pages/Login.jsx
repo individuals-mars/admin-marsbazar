@@ -50,15 +50,15 @@ const Login = () => {
       <div className='flex max-w-[30%] mx-auto h-screen flex-col items-center justify-center p-2 flex-1 gap-3'>
         <h1 className='font-bold text-2xl'>Get started now</h1>
         <fieldset className="fieldset w-full">
-          <legend className="fieldset-legend">Login</legend>
-          <input onChange={handleCHange} name='email' value={formData.email} type="text" className="input input-primary w-full" placeholder="Login" />
+          <legend className="fieldset-legend ">Login</legend>
+          <input onChange={handleCHange} name='email' value={formData.email} type="text" className="input input-primary w-full rounded-lg" placeholder="Login" />
         </fieldset>
 
         <fieldset className="fieldset w-full">
           <legend className="fieldset-legend">Password</legend>
-          <input onChange={handleCHange} name='password' value={formData.password} type="password" className="input input-primary w-full" placeholder="Password" />
+          <input onChange={handleCHange} name='password' value={formData.password} type="password" className="input input-primary w-full rounded-lg" placeholder="Password" />
         </fieldset>
-        <button onClick={handleSumbit} className='btn btn-primary w-full'>Log in</button>
+        <button onClick={handleSumbit} className='btn btn-primary w-full rounded-lg cursor-pointer'>Log in</button>
       </div>
     </div>
   )

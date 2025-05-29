@@ -1,27 +1,22 @@
-import React, { use, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
 import ContainerTemplate from '../components/ContainerTemplate'
 import TitleTemplate from '../components/TitleTemplate'
-import { useState } from 'react'
-import axios from 'axios'
 
-const Allusers = () => {
+const AllUsers = () => {
   const URL = import.meta.env.VITE_BACKEND_URL + '/api/auth/users'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [users, setUsers] = useState([])
 
-
   const getUsers = async () => {
     setLoading(true)
+    setError(null)
     try {
       const response = await axios.get(URL)
-      console.log(response);
-      console.log('Working');
       setUsers(response.data)
-
-    } catch (error) {
-      console.error('Error', error);
-      setError("Ko'tin boq")
+    } catch (err) {
+      setError("Ошибка при загрузке пользователей")
     } finally {
       setLoading(false)
     }
@@ -29,49 +24,50 @@ const Allusers = () => {
 
   useEffect(() => {
     getUsers()
-    console.log("GetUser working");
   }, [])
-
 
   return (
     <ContainerTemplate>
-      <div>
-        <div>
-          <TitleTemplate title='All Users' description='Here is all users list' />
-        </div>
-        <div>
-          <div className="overflow-x-auto mt-5 bg-base-100 rounded-lg">
-            <table className="table">
-              {/* head */}
-              <thead>
-                <tr>
-                  <th>
-                    <label>
-                      <p>ID</p>
-                    </label>
-                  </th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Settings</th>
-                  <th></th>
+      <TitleTemplate title="All Users" description="List of all users" />
+      <div className="overflow-x-auto bg-base-100 mt-5 rounded-lg">
+        <table className="table w-full">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              [...Array(6)].map((_, i) => (
+                <tr key={i}>
+                  <td colSpan={5}>
+                    <div className="skeleton h-12 w-full"></div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {
-                  users.map((user, index,) => (
-                        <tr key={index}>
-                  <th>
-                    <label>
-                      <p>{user._id}</p>
-                    </label>
-                  </th>
+              ))
+            ) : error ? (
+              <tr>
+                <td colSpan={5}>
+                  <p className="text-center text-red-500 mt-3">{error}</p>
+                </td>
+              </tr>
+            ) : (
+              users.map((user) => (
+                <tr key={user._id}>
+                  <td>{user._id}</td>
                   <td>
                     <div className="flex items-center gap-3">
                       <div className="avatar">
-                        <div className="mask mask-squircle bg-base-300 h-12 w-12">
+                        <div className="mask mask-squircle w-12 h-12">
                           <img
-                            src={user.img}
-                            alt="Avatar Tailwind CSS Component" />
+                            src={user.img || '/default-avatar.png'}
+                            onError={(e) => (e.target.src = '/default-avatar.png')}
+                            alt="User"
+                          />
                         </div>
                       </div>
                       <div>
@@ -80,23 +76,19 @@ const Allusers = () => {
                       </div>
                     </div>
                   </td>
+                  <td>{user.email}</td>
+                  <td>{user.role}</td>
                   <td>
-                   {user.email}
+                    <button className="btn btn-ghost btn-xs">Details</button>
                   </td>
-                  <td>Purple</td>
-                  <th>
-                    <button className="btn btn-ghost btn-xs">details</button>
-                  </th>
                 </tr>
-                  ))
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </ContainerTemplate>
   )
 }
 
-export default Allusers
+export default AllUsers

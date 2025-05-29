@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
 import ContainerTemplate from '../components/ContainerTemplate'
 import TitleTemplate from '../components/TitleTemplate'
-import { useState, useEffect } from 'react'
-import axios from 'axios'
+
 const Sellers = () => {
   const URL = import.meta.env.VITE_BACKEND_URL + '/api/auth/users'
   const [loading, setLoading] = useState(false)
@@ -11,84 +11,81 @@ const Sellers = () => {
 
   const getSellers = async () => {
     setLoading(true)
+    setError(null)
     try {
-      const response = await axios.get(URL)
-      console.log(response);
-      console.log('Working');
-      setSellers(response.data)
-
-    } catch (error) {
-      console.error('Error', error);
-      setError("Ko'tin boq")
+      const res = await axios.get(URL)
+      setSellers(res.data.filter((user) => user.role === 'seller'))
+    } catch (err) {
+      setError("Ошибка при загрузке продавцов")
     } finally {
       setLoading(false)
     }
   }
 
-
   useEffect(() => {
     getSellers()
-    console.log("GetUser working");
-  })
+  }, [])
+
   return (
     <ContainerTemplate>
-      <div>
-        <div>
-          <TitleTemplate title='Sellers' description='Here is all sellers list' />
-        </div>
-        <div className="overflow-x-auto bg-base-100 mt-5 rounded-lg">
-          <table className="table">
-            {/* head */}
-            <thead>
+      <TitleTemplate title="Sellers" description="List of sellers" />
+      <div className="overflow-x-auto bg-base-100 mt-5 rounded-lg">
+        <table className="table w-full">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              [...Array(2)].map((_, i) => (
+                <tr key={i}>
+                  <td colSpan={5}>
+                    <div className="skeleton h-12 w-full"></div>
+                  </td>
+                </tr>
+              ))
+            ) : error ? (
               <tr>
-                <th>
-                  <label>
-                    <p>ID</p>
-                  </label>
-                </th>
-                <th>Name</th>
-                <th>Job</th>
-                <th>Favorite Color</th>
-                <th></th>
+                <td colSpan={5}>
+                  <p className="text-center text-red-500 mt-3">{error}</p>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {
-                sellers.filter(sellers => sellers.role === 'seller').map((sellers, index,) => (
-                  <tr key={index}>
-                    <th>
-                      <label>
-                       <p>{sellers._id}</p>
-                      </label>
-                    </th>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <div className="avatar">
-                          <div className="mask mask-squircle h-12 w-12">
-                            <img
-                              src={sellers.img}
-                              alt="Avatar Tailwind CSS Component" />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="font-bold">{sellers.username}</div>
-                          <div className="text-sm opacity-50">{sellers.role}</div>
+            ) : (
+              sellers.map((user) => (
+                <tr key={user._id}>
+                  <td>{user._id}</td>
+                  <td>
+                    <div className="flex items-center gap-3">
+                      <div className="avatar">
+                        <div className="mask mask-squircle w-12 h-12">
+                          <img
+                            src={user.img || '/default-avatar.png'}
+                            onError={(e) => (e.target.src = '/default-avatar.png')}
+                            alt="Seller"
+                          />
                         </div>
                       </div>
-                    </td>
-                    <td>
-                     {sellers.email}
-                    </td>
-                    <td>{sellers.storeName}</td>
-                    <th>
-                      <button className="btn btn-ghost btn-xs">details</button>
-                    </th>
-                  </tr>
-                ))
-              }
-            </tbody>
-          </table>
-        </div>
+                      <div>
+                        <div className="font-bold">{user.username}</div>
+                        <div className="text-sm opacity-50">{user.role}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{user.email}</td>
+                  <td>{user.role}</td>
+                  <td>
+                    <button className="btn btn-ghost btn-xs">Details</button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </ContainerTemplate>
   )

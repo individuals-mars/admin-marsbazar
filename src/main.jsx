@@ -22,6 +22,10 @@ import Allusers from './pages/Allusers.jsx';
 import Sellers from './pages/Sellers.jsx';
 import Admins from './pages/Admins.jsx';
 import Customers from './pages/Customers.jsx';
+import Shops from './pages/Shops.jsx';
+import MyDraftProducts from './pages/MyDraftProducts.jsx';
+import All from './pages/all.jsx';
+import Envelope from './pages/Envelope.jsx';
 
 
 
@@ -42,6 +46,10 @@ const router = createBrowserRouter([
       { path: '/sellers', element: <Sellers /> },
       { path: '/admins', element: <Admins /> },
       { path: '/customers', element: <Customers /> },
+      { path: '/shops', element: <Shops /> },
+      { path: '/mydraftproducts', element: <MyDraftProducts /> },
+      { path: '/all', element: <All /> },
+      { path: '/envelope', element: <Envelope /> },
     ]
   },
   {
@@ -51,7 +59,7 @@ const router = createBrowserRouter([
   {
     path: "/register",
     element: <Register />
-  }
+  },
 
 
 ]);

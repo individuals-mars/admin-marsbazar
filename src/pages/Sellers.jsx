@@ -53,8 +53,16 @@ const Sellers = () => {
               </tr>
             </thead>
             <tbody>
-              {
-                sellers.filter(sellers => sellers.role === 'seller').map((sellers, index,) => (
+              { loading ? (
+                <tr>
+                    <td colSpan={5}>
+                      <div className="flex justify-center items-center p-5">
+                        <span className="loading loading-spinner loading-lg"></span>
+                      </div>
+                    </td>
+                  </tr>
+              ) : sellers.length ? (
+                 sellers.filter(sellers => sellers.role === 'seller').map((sellers, index,) => (
                   <tr key={index}>
                     <th>
                       <label>
@@ -85,7 +93,14 @@ const Sellers = () => {
                     </th>
                   </tr>
                 ))
-              }
+              ) : (
+                 <tr>
+                    <td colSpan={5} className="text-center p-5">
+                     Sellers not found
+                    </td>
+                  </tr>
+              )
+              } 
             </tbody>
           </table>
         </div>

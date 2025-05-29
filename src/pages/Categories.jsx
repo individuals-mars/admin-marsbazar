@@ -10,9 +10,9 @@ import { MdClose } from "react-icons/md";
 
 const Categories = () => {
 
-    
-   
- 
+
+
+
     const URL = import.meta.env.VITE_BACKEND_URL + '/api/categories'
     const deleteURL = import.meta.env.VITE_BACKEND_URL + '/api/categories/'
     const [error, setError] = useState(null)
@@ -28,8 +28,8 @@ const Categories = () => {
     const textRef = useRef(null)
     const [categoryID, setCategoryId] = useState(null)
     const [categoryName, setCategoryName] = useState(null)
-   
-    
+
+
 
     const handleCHange = (e) => {
         setData({ ...data, [e.target.name]: e.target.value })
@@ -98,17 +98,17 @@ const Categories = () => {
     }
 
 
-   
+
     const copyText = () => {
         const text = textRef.current?.innerText;
         if (text) {
             navigator.clipboard.writeText(text)
-            .then(() => {
-                console.log('Matin nusxalandi!');
-            })
-            .catch(error => {
-                console.error('Nusxalashda xatolik:', error);
-            })
+                .then(() => {
+                    console.log('Matin nusxalandi!');
+                })
+                .catch(error => {
+                    console.error('Nusxalashda xatolik:', error);
+                })
         }
     }
 
@@ -169,12 +169,20 @@ const Categories = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={5}>
+                                            <div className="flex justify-center items-center p-5">
+                                                <span className="loading loading-spinner loading-lg"></span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : category.length ? (
                                     category.map((item, index, id) => (
                                         <tr key={index}>
-                                            <button className='p-5' onClick={() => {setCategoryId(item._id), setCategoryName(item.name), modalRef.current?.showModal()}}>{index + 1}</button>
+                                            <button className='p-5' onClick={() => { setCategoryId(item._id), setCategoryName(item.name), modalRef.current?.showModal() }}>{index + 1}</button>
                                             <dialog ref={modalRef} id="my_modal_5" className="modal modal-bottom sm:modal-middle">
-                                                <div className="modal-box"> 
+                                                <div className="modal-box">
                                                     <h3 className="font-bold text-lg">Here is {categoryName} id !</h3>
                                                     <p ref={textRef} className="py-4 text-xl ">{categoryID}</p>
                                                     <div className="modal-action">
@@ -195,6 +203,14 @@ const Categories = () => {
                                             </td>
                                         </tr>
                                     ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} className="text-center p-5">
+                                            Categories not found
+                                        </td>
+                                    </tr>
+                                )
+
                                 }
                             </tbody>
                         </table>

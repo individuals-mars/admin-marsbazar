@@ -53,7 +53,15 @@ const Customers = () => {
               </tr>
             </thead>
             <tbody>
-              {
+              { loading ? (
+                <tr>
+                    <td colSpan={5}>
+                      <div className="flex justify-center items-center p-5">
+                        <span className="loading loading-spinner loading-lg"></span>
+                      </div>
+                    </td>
+                  </tr>
+              ) : customers.length ? (
                 customers.filter(customers => customers.role === 'user').map((cusmoter, index,) => (
                   <tr key={index}>
                     <th>
@@ -84,6 +92,14 @@ const Customers = () => {
                     </th>
                   </tr>
                 ))
+              ) : (
+                <tr>
+                    <td colSpan={5} className="text-center p-5">
+                     Customers not found
+                    </td>
+                  </tr>
+              )
+              
               }
             </tbody>
           </table>

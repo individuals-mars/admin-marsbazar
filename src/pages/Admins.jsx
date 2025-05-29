@@ -52,7 +52,16 @@ const Admins = () => {
               </tr>
             </thead>
             <tbody>
-              {
+
+              { loading ? (
+                  <tr>
+                    <td colSpan={5}>
+                      <div className="flex justify-center items-center p-5">
+                        <span className="loading loading-spinner loading-lg"></span>
+                      </div>
+                    </td>
+                  </tr>
+              ) : admins.length ? (
                 admins.filter(admins => admins.role === 'admin').map((admin, index,) => (
                   <tr key={index}>
                     <th>
@@ -83,7 +92,13 @@ const Admins = () => {
                     </th>
                   </tr>
                 ))
-              }
+              ) : (
+                 <tr>
+                    <td colSpan={5} className="text-center p-5">
+                     Users not found
+                    </td>
+                  </tr>
+             ) }
             </tbody>
           </table>
         </div>

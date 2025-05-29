@@ -1,4 +1,4 @@
-import React, { use, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import ContainerTemplate from '../components/ContainerTemplate'
 import TitleTemplate from '../components/TitleTemplate'
 import { useState } from 'react'
@@ -57,40 +57,54 @@ const Allusers = () => {
                 </tr>
               </thead>
               <tbody>
-                {
-                  users.map((user, index,) => (
-                        <tr key={index}>
-                  <th>
-                    <label>
-                      <p>{user._id}</p>
-                    </label>
-                  </th>
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <div className="avatar">
-                        <div className="mask mask-squircle bg-base-300 h-12 w-12">
-                          <img
-                            src={user.img}
-                            alt="Avatar Tailwind CSS Component" />
+                {loading ? (
+                  <tr>
+                    <td colSpan={5}>
+                      <div className="flex justify-center items-center p-5">
+                        <span className="loading loading-spinner loading-lg"></span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : users.length ? (
+                  users.map((user, index) => (
+                    <tr key={index}>
+                      <th>
+                        <label>
+                          <p>{user._id}</p>
+                        </label>
+                      </th>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="avatar">
+                            <div className="mask mask-squircle bg-base-300 h-12 w-12">
+                              <img
+                                src={user.img}
+                                alt="Avatar Tailwind CSS Component"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-bold">{user.username}</div>
+                            <div className="text-sm opacity-50">{user.role}</div>
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <div className="font-bold">{user.username}</div>
-                        <div className="text-sm opacity-50">{user.role}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                   {user.email}
-                  </td>
-                  <td>Purple</td>
-                  <th>
-                    <button className="btn btn-ghost btn-xs">details</button>
-                  </th>
-                </tr>
+                      </td>
+                      <td>{user.email}</td>
+                      <td>Purple</td>
+                      <th>
+                        <button className="btn btn-ghost btn-xs">details</button>
+                      </th>
+                    </tr>
                   ))
-                }
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="text-center p-5">
+                     Users not found
+                    </td>
+                  </tr>
+                )}
               </tbody>
+
             </table>
           </div>
         </div>

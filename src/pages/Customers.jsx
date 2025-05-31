@@ -1,6 +1,6 @@
 import React from 'react'
 import ContainerTemplate from '../components/ContainerTemplate'
-import TitleTemplate from '../../../seller-admin/src/components/TitleTemplate'
+import TitleTemplate from '../../src/components/TitleTemplate'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 

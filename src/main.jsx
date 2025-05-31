@@ -22,6 +22,8 @@ import Allusers from './pages/Allusers.jsx';
 import Sellers from './pages/Sellers.jsx';
 import Admins from './pages/Admins.jsx';
 import Customers from './pages/Customers.jsx';
+import OrdersInfo from './pages/OrderInfo.jsx';
+import OrderInfo from './pages/OrderInfo.jsx';
 
 
 
@@ -42,6 +44,8 @@ const router = createBrowserRouter([
       { path: '/sellers', element: <Sellers /> },
       { path: '/admins', element: <Admins /> },
       { path: '/customers', element: <Customers /> },
+      { path: '/order/:id', element: <OrderInfo /> }
+
     ]
   },
   {

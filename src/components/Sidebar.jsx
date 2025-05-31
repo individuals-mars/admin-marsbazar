@@ -9,6 +9,7 @@ import { FaUsers } from "react-icons/fa";
 
 const Sidebar = () => {
     const location = useLocation();
+    
     const Name = import.meta.env.VITE_MARS_NAME
 
     const menuItems = [

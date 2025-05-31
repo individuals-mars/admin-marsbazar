@@ -71,13 +71,12 @@ const OrderInfo = () => {
     }
   ];
 
-  console.log("Order Pending status:", ordersInfo.paymentStatus);
+  console.log("Order Pending status:", ordersInfo.paymentStatus); // for debug
   
 
   return (
     <ContainerTemplate>
       <div className='flex flex-col'>
-
         <div className="bg-base-300 flex justify-between items-center rounded-tl-md rounded-tr-md px-6 py-4">
           <p className='font-bold'>
             Order Status: <span className='bg-success text-base-content rounded-2xl px-2 py-1 text-xs font-semibold capitalize'>

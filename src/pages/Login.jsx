@@ -3,6 +3,7 @@ import axios from 'axios'
 import { login } from '../store/userSlice'
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 
 const Login = () => {
@@ -15,10 +16,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const dispatch = useDispatch()
   const handleCHange = (e) => {
-    setFormData({...formData, [e.target.name]: e.target.value})
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   };
 
-  const handleSumbit = async (e)  => {
+  const handleSumbit = async (e) => {
+    e.preventDefault()
     try {
       const request = await fetch(postURL, {
         method: 'POST',
@@ -29,17 +31,23 @@ const Login = () => {
       })
       const response = await request.json()
       console.log(response)
-      dispatch(login({
-        token: response?.token,
-        user: response,
-        role: response?.role
-      }))
-      navigate('/dashboard')
+      if (request.ok) {
+        dispatch(login({
+          token: response?.token,
+          user: response,
+          role: response?.role
+        }))
+        navigate('/dashboard')
+        toast.success("Вход выполнен Успешно!")
+      } else {
+        toast.error(response?.message)
+      }
       // setFormData(response.data)
       setLoading(true)
     } catch (error) {
       console.error('Error', error);
       setLoading(false)
+      toast.error(error)
     } finally {
       setLoading(false)
     }

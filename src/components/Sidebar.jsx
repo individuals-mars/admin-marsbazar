@@ -36,8 +36,8 @@ const Sidebar = () => {
       icon: <RiShoppingBasket2Fill />,
       children: [
         { path: "/products", label: "All Products" },
-        { path: "/mydraftproducts", label: "My Draft products" },
-        { path: "/all", label: "All (fallback)" },
+        { path: "/CreateProduct", label: "Create Product" },
+        { path: "/enventory", label: "Enventory" },
       ]
     },
     { path: "/orders", icon: <LuInbox />, label: "Orders" },

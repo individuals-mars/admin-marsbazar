@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import ContainerTemplate from '../components/ContainerTemplate'
 import TitleTemplate from '../components/TitleTemplate'
+import { toast } from 'react-toastify'
 
 const AllUsers = () => {
   const URL = import.meta.env.VITE_BACKEND_URL + '/api/auth/users'

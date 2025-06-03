@@ -6,13 +6,10 @@ import { AiOutlineDelete } from "react-icons/ai";
 import axios from 'axios'
 import { IoCopyOutline } from "react-icons/io5";
 import { MdClose } from "react-icons/md";
+import { toast } from 'react-toastify';
 
 
 const Categories = () => {
-
-    
-   
- 
     const URL = import.meta.env.VITE_BACKEND_URL + '/api/categories'
     const deleteURL = import.meta.env.VITE_BACKEND_URL + '/api/categories/'
     const [error, setError] = useState(null)
@@ -28,8 +25,8 @@ const Categories = () => {
     const textRef = useRef(null)
     const [categoryID, setCategoryId] = useState(null)
     const [categoryName, setCategoryName] = useState(null)
-   
-    
+
+
 
     const handleCHange = (e) => {
         setData({ ...data, [e.target.name]: e.target.value })
@@ -87,10 +84,11 @@ const Categories = () => {
             setCategory(category.filter((item) => item._id !== id))
             console.log('Category deleted', response);
             setLoading(true)
-
+            toast.success('Category deleted successfully!')
         } catch (error) {
             console.error('Error deleting category:', error);
             setError(error)
+            toast.error('Error deleting category!')
             getCategories()
         } finally {
             setLoading(false)
@@ -98,21 +96,19 @@ const Categories = () => {
     }
 
 
-   
+
     const copyText = () => {
         const text = textRef.current?.innerText;
         if (text) {
             navigator.clipboard.writeText(text)
-            .then(() => {
-                console.log('Matin nusxalandi!');
-            })
-            .catch(error => {
-                console.error('Nusxalashda xatolik:', error);
-            })
+                .then(() => {
+                    console.log('Matin nusxalandi!');
+                })
+                .catch(error => {
+                    console.error('Nusxalashda xatolik:', error);
+                })
         }
     }
-
-
 
     return (
         <ContainerTemplate>
@@ -172,9 +168,9 @@ const Categories = () => {
                                 {
                                     category.map((item, index, id) => (
                                         <tr key={index}>
-                                            <button className='p-5' onClick={() => {setCategoryId(item._id), setCategoryName(item.name), modalRef.current?.showModal()}}>{index + 1}</button>
+                                            <button className='p-5' onClick={() => { setCategoryId(item._id), setCategoryName(item.name), modalRef.current?.showModal() }}>{index + 1}</button>
                                             <dialog ref={modalRef} id="my_modal_5" className="modal modal-bottom sm:modal-middle">
-                                                <div className="modal-box"> 
+                                                <div className="modal-box">
                                                     <h3 className="font-bold text-lg">Here is {categoryName} id !</h3>
                                                     <p ref={textRef} className="py-4 text-xl ">{categoryID}</p>
                                                     <div className="modal-action">

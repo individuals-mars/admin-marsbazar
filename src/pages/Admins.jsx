@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import ContainerTemplate from '../components/ContainerTemplate'
 import TitleTemplate from '../components/TitleTemplate'
+import { toast } from 'react-toastify'
 
 const Admins = () => {
   const URL = import.meta.env.VITE_BACKEND_URL + '/api/auth/users'
@@ -16,7 +17,7 @@ const Admins = () => {
       const res = await axios.get(URL)
       setAdmins(res.data.filter((user) => user.role === 'admin'))
     } catch (err) {
-      setError("Ошибка при загрузке админов")
+      console.error(err);
     } finally {
       setLoading(false)
     }

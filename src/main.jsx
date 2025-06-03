@@ -23,10 +23,10 @@ import Sellers from './pages/Sellers.jsx';
 import Admins from './pages/Admins.jsx';
 import Customers from './pages/Customers.jsx';
 import Shops from './pages/Shops.jsx';
-import MyDraftProducts from './pages/MyDraftProducts.jsx';
-import All from './pages/all.jsx';
 import Envelope from './pages/Envelope.jsx';
-
+import { ToastContainer, toast } from 'react-toastify';
+import CreateProducts from './pages/CreateProducts.jsx';
+import Enventory from './pages/Enventory.jsx';
 
 
 const router = createBrowserRouter([
@@ -47,8 +47,8 @@ const router = createBrowserRouter([
       { path: '/admins', element: <Admins /> },
       { path: '/customers', element: <Customers /> },
       { path: '/shops', element: <Shops /> },
-      { path: '/mydraftproducts', element: <MyDraftProducts /> },
-      { path: '/all', element: <All /> },
+      { path: '/CreateProduct', element: <CreateProducts /> },
+      { path: '/Enventory', element: <Enventory /> },
       { path: '/envelope', element: <Envelope /> },
     ]
   },
@@ -69,6 +69,7 @@ createRoot(document.getElementById('root')).render(
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <RouterProvider router={router} />
+        <ToastContainer />
       </PersistGate>
     </Provider>
   </StrictMode>,

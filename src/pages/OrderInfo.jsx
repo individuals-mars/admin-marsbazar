@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import LoadingTemplate from '../components/LoadingTemplate';
 import { MdOutlineSaveAlt } from "react-icons/md";
-import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import ContainerTemplate from '../components/ContainerTemplate';
@@ -38,11 +37,11 @@ const OrderInfo = () => {
     if (ordersInfo) {
       setLoading(false);
     }
-  }, [ordersInfo]); 
+  }, [ordersInfo]);
 
   const activeStep = getStepIndex(ordersInfo?.status);
   console.log(activeStep);
-  
+
 
   if (loading || !ordersInfo) {
     return (
@@ -53,12 +52,11 @@ const OrderInfo = () => {
   }
 
   const steps = [
-    'Order Pending',
-    'Order Processing',
-    'Order At Local Facility',
-    'Order Out For Delivery',
-    'Order Completed'
-  ];
+    { name: 'Pending' },
+    { name: 'Processing' },
+    { name: 'Local Facility' },
+    { name: 'Out for Delivery' },
+  ]
 
   const OrderInfoSection = [
     {
@@ -72,7 +70,7 @@ const OrderInfo = () => {
   ];
 
   console.log("Order Pending status:", ordersInfo.paymentStatus); // for debug
-  
+
 
   return (
     <ContainerTemplate>
@@ -118,37 +116,21 @@ const OrderInfo = () => {
             </div>
           </div>
 
-          {/* Stepper */}
-          <div className='mt-18'>
-            <Stepper activeStep={activeStep} alternativeLabel
-              sx={{
-                '& .MuiStepIcon-root': { color: '#10b981', fontSize: '2.4rem' },
-                '& .MuiStepIcon-root.Mui-completed': { color: '#10b981' },
-                '& .MuiStepIcon-root.Mui-active': { color: '#10b981' },
-                '& .MuiStepLabel-label': { fontSize: '0.875rem', fontWeight: 500 },
-                '& .MuiStepConnector-line': { borderTopWidth: 4, borderColor: '#10b981' },
-                '& .MuiStepConnector-root': {
-                  top: '22px',
-                  left: 'calc(-54% + 16px)',
-                  right: 'calc(45% + 16px)',
-                },
-                '& .MuiStep:last-child .MuiStepConnector-root': { display: 'none' },
-              }}>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
+          <div className='mt-8 bg-base-200'>
+            <ul className="steps steps-vertical lg:steps-horizontal w-full">
+              {steps.map((item, index) => (
+                <li key={index} className={`step ${index <= activeStep ? 'step-primary' : ''}`}>
+                  {item.name}
+                </li>
               ))}
-            </Stepper>
+            </ul>
           </div>
 
-          {/* Products Header */}
           <div className='mt-8 bg-base-200 flex items-center justify-between p-2 rounded-xl'>
             <p className='pl-4 font-medium'>Products</p>
             <p className='pr-4 font-medium'>Total</p>
           </div>
 
-          {/* Product Info */}
           <div className='flex items-center gap-4 mt-4 justify-between'>
             <div className='flex items-center gap-3'>
               <img src={`../../public/handback.png`} alt="Product" className='w-[5%]' />

@@ -60,16 +60,16 @@ const OrderInfo = () => {
 
   const OrderInfoSection = [
     {
-      title: `${ordersInfo.customer}`,
+      title: `${ordersInfo.customer.username}`,
       content: [
         `${ordersInfo.products?.status || 1} Item`,
         "Express Delivery",
         `Payment Method: ${formatPaymentMethod(ordersInfo.paymentStatus)}`
       ]
     }
-  ];
+  ];  
 
-  console.log("Order Pending status:", ordersInfo.paymentStatus); // for debug
+  console.log("Order Pending status:", ordersInfo); 
 
 
   return (
@@ -159,11 +159,10 @@ const OrderInfo = () => {
             </div>
           </div>
 
-          {/* Customer Info */}
           <div className='flex items-start justify-between mt-10 gap-6'>
             {OrderInfoSection.map((section, index) => (
               <div key={index} className='w-full max-w-xs'>
-                <p className='font-medium text-xl mb-2'>{section.title}</p>
+                <p className='font-medium text-xl mb-2'>{section?.title}</p>
                 <hr className='my-4 border-base-300' />
                 <div className='space-y-1'>
                   {section.content.map((line, i) => (

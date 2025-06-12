@@ -27,6 +27,8 @@ import Envelope from './pages/Envelope.jsx';
 import { ToastContainer, toast } from 'react-toastify';
 import CreateProducts from './pages/CreateProducts.jsx';
 import Enventory from './pages/Enventory.jsx';
+import ShopsDetail from './pages/ShopsDetail.jsx';
+import ModalCreateShops from './pages/ModalCreateShops.jsx';
 
 
 const router = createBrowserRouter([
@@ -47,9 +49,11 @@ const router = createBrowserRouter([
       { path: '/admins', element: <Admins /> },
       { path: '/customers', element: <Customers /> },
       { path: '/shops', element: <Shops /> },
+      { path: '/shopdetail/:id', element: <ShopsDetail /> },
       { path: '/CreateProduct', element: <CreateProducts /> },
       { path: '/Enventory', element: <Enventory /> },
       { path: '/envelope', element: <Envelope /> },
+      { path: '/modalcreateshops', element: <ModalCreateShops /> },
     ]
   },
   {

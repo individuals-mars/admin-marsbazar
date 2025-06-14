@@ -116,7 +116,7 @@ const ModalCreateShops = () => {
       }
 
       toast.success('Shop created successfully!');
-      navigate('/createshops');
+      navigate('/shops');
     } catch (err) {
       console.error('Error creating shop:', err);
       if (err.message.includes('Unauthorized') || err.message.includes('Invalid token')) {

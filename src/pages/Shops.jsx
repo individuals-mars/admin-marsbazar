@@ -91,7 +91,7 @@ const Shops = () => {
 
             {fetchLoading ? (
                 <div className="flex flex-wrap gap-6">
-                    {[...Array(1)].map((_, i) => (
+                    {[...Array(3)].map((_, i) => (
                         <div key={i} className="skeleton h-[260px] w-[390px] mt-3"></div>
                     ))}
                 </div>
@@ -109,12 +109,12 @@ const Shops = () => {
                                 <img
                                     src={shop.logotype || defaultLogo}
                                     alt={`${shop.shopname} logo`}
-                                    className="w-24 h-24 object-contain rounded-full bg-success"
+                                    className="w-24 h-24 object-contain rounded-full "
                                 />
                                 <div>
                                     <h2 className="card-title text-lg">{shop.shopname}</h2>
                                     <p className="text-sm text-gray-500 flex mt-2">
-                                        <SiGooglemaps className=" mt-1 mr-2" />
+                                        <SiGooglemaps className="mt-1 mr-2" />
                                         {shop.address || 'Tashkent, Uzbekistan'}
                                     </p>
                                     <p className="text-sm text-gray-500 flex mt-2">

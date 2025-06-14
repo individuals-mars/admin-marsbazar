@@ -193,12 +193,12 @@ const Orders = () => {
                     return (
                       <tr key={order._id}>
                         <th>{index + 1}</th>
-                        <td>{customer?.username || "Noma'lum"}</td>
-                        <td>{customer.phone || "Mavjud emas"}</td>
-                        <td>{customer.age || "Mavjud emas"}</td>
-                        <td>{customer.gender || "Mavjud emas"}</td>
+                        <td>{order?.items?.[0]?.name || "Noma'lum"}</td>
+                        <td>{order.phone || "Mavjud emas"}</td>
+                        <td>{customer?.items?.age || "Mavjud emas"}</td>
+                        <td>{order.items?.gender || "Male"}</td>
                         <td>{location.city || "Mavjud emas"}</td>
-                        <td>{location.region || "Mavjud emas"}</td>
+                        <td>{order.deliveryDetails?.address || "Mavjud emas"}</td>
                         <td>{location.street || "Mavjud emas"}</td>
                         <td>
                           <span className='bg-base-300 text-success relative right-2 font-semibold p-2 rounded-full'>

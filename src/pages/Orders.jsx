@@ -33,6 +33,8 @@ const Orders = () => {
     try {
       const response = await fetch(apiUrl);
       const data = await response.json();
+      console.log("Orders: ", data);
+      
       const fetchedOrders = data.data || data || [];
       setOrdersLocal(fetchedOrders);
       setFilteredOrders(fetchedOrders);

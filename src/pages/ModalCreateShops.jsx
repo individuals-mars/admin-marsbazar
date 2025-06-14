@@ -338,9 +338,9 @@ const ModalCreateShops = () => {
                 value={formData.TariffPlan}
                 onChange={handleInputChange}
               >
-                <option value="basic">Basic</option>
-                <option value="standard">Standard</option>
-                <option value="premium">Premium</option>
+                <option value="basic" className='text-white bg-base-200'>Basic</option>
+                <option value="standard" className='text-white bg-base-200'>Standard</option>
+                <option value="premium" className='text-white bg-base-200'>Premium</option>
               </select>
             </div>
           </div>

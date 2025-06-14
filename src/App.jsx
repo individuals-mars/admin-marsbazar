@@ -20,11 +20,11 @@ function App() {
         <aside className='w-2/12 relative '>
           <Sidebar />
         </aside>
-        <section className='flex flex-col  flex-1'>
+        <section className='flex flex-col  flex-1 bg-base-200'>
           <div className='bg-base-200 w-full flex flex-col flex-1 justify-start justify-items-start gap-5 '>
             <Navbar />
           </div>
-          <div className='bg-base-200 w-full flex flex-col flex-1 justify-start justify-items-start gap-5'>
+          <div className='bg-base-200  w-full flex flex-col flex-1 justify-start justify-items-start gap-5'>
             <Outlet />
           </div>
         </section>

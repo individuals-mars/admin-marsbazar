@@ -19,6 +19,7 @@ const Sidebar = () => {
       children: [
         { path: "/dashboard", label: "Dashboard" },
         { path: "/shops", label: "Shops" },
+        { path: "/modalcreateshops", label: "Modal Create Shops" },
       ]
     },
     {
@@ -61,7 +62,7 @@ const Sidebar = () => {
                 {item.children.map((child, childIndex) => {
                   const isChildActive = child.path && location.pathname === child.path;
                   return (
-                    <li
+                    <li 
                       key={childIndex}
                       className={`rounded-xl w-full ${isChildActive ? "bg-base-300 text-primary font-semibold" : ""}`}
                     >

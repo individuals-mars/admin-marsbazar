@@ -195,7 +195,7 @@ const Orders = () => {
                         <th>{index + 1}</th>
                         <td>{order?.items?.[0]?.name || "Noma'lum"}</td>
                         <td>{order.phone || "Mavjud emas"}</td>
-                        <td>{customer?.items?.age || "Mavjud emas"}</td>
+                        <td>{customer?.items?.age || "Mavjud emas"}</td>  
                         <td>{order.items?.gender || "Male"}</td>
                         <td>{location.city || "Mavjud emas"}</td>
                         <td>{order.deliveryDetails?.address || "Mavjud emas"}</td>

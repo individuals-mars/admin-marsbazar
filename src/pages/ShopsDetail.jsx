@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 
 const ShopDetail = () => {
     const { id } = useParams();
+    const URL = import.meta.env.VITE_BACKEND_URL + '/api/auth/users';
     const navigate = useNavigate();
     const [shop, setShop] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -20,7 +21,6 @@ const ShopDetail = () => {
         description: '',
         logotype: '',
         location: { lat: '', lon: '' },
-        phone: '',
         TariffPlan: 'basic',
     });
     const [errors, setErrors] = useState({});
@@ -54,7 +54,7 @@ const ShopDetail = () => {
                         }
                         const errorData = JSON.parse(text);
                         errorMessage = errorData.message || errorMessage;
-                    } catch (_) {}
+                    } catch (_) { }
                     throw new Error(errorMessage);
                 }
                 const data = await response.json();
@@ -68,7 +68,6 @@ const ShopDetail = () => {
                         lat: data.location?.lat?.toString() || '',
                         lon: data.location?.lon?.toString() || '',
                     },
-                    phone: data.phone || '',
                     TariffPlan: data.TariffPlan?.toLowerCase() || 'basic',
                 });
             } catch (err) {
@@ -93,9 +92,6 @@ const ShopDetail = () => {
         const newErrors = {};
         if (!editFormData.shopname.trim()) newErrors.shopname = 'Shop name is required';
         if (!editFormData.address.trim()) newErrors.address = 'Address is required';
-        if (!editFormData.phone.match(/^\+?\d{10,15}$/)) {
-            newErrors.phone = 'Phone must be a valid number (e.g., +998901234567)';
-        }
         if (editFormData.logotype && !editFormData.logotype.match(/^https?:\/\/.*\.(png|jpg|jpeg|gif)$/)) {
             newErrors.logotype = 'Logo must be a valid image URL';
         }
@@ -133,7 +129,6 @@ const ShopDetail = () => {
                     lat: editFormData.location.lat ? parseFloat(editFormData.location.lat) : undefined,
                     lon: editFormData.location.lon ? parseFloat(editFormData.location.lon) : undefined,
                 },
-                phone: editFormData.phone,
                 TariffPlan: editFormData.TariffPlan,
             };
 
@@ -151,7 +146,7 @@ const ShopDetail = () => {
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
-                } catch (_) {}
+                } catch (_) { }
                 throw new Error(errorMessage);
             }
 
@@ -195,7 +190,7 @@ const ShopDetail = () => {
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
-                } catch (_) {}
+                } catch (_) { }
                 throw new Error(errorMessage);
             }
 
@@ -237,7 +232,7 @@ const ShopDetail = () => {
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
-                } catch (_) {}
+                } catch (_) { }
                 throw new Error(errorMessage);
             }
 
@@ -321,10 +316,6 @@ const ShopDetail = () => {
                                 <p className="text-base-350 dark:text-gray-300 mt-1">{shop.address}</p>
                             </div>
                             <div className="text-sm mt-2">
-                                <strong className="text-base-350 dark:text-gray-200 font-medium">Phone:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1">{shop.phone || '+998901234567'}</p>
-                            </div>
-                            <div className="text-sm mt-2">
                                 <strong className="text-base-350 dark:text-gray-200 font-medium">Location:</strong>
                                 <p className="text-base-350 dark:text-gray-300 mt-1">
                                     {shop.location ? `${shop.location.lat}, ${shop.location.lon}` : '41.321412, 69.2797'}
@@ -344,7 +335,37 @@ const ShopDetail = () => {
 
                 <div className="divider my-4 sm:my-6 border-gray-200 dark:border-gray-700" />
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mt-10">
+                <div className="text-sm mt-2 ">
+                    <div className='flex justify-center'>
+                        <strong className="text-base-350 dark:text-gray-200 font-medium text-lg ">Owner Information:</strong>
+                    </div>
+                    <div className=" flex justify-between gap-4 mt-6">
+                        <div>
+                            <p className="text-base-350 dark:text-gray-300">
+                                <strong>Username:</strong> {shop.owner?.username || 'N/A'}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-base-350 dark:text-gray-300">
+                                <strong>Email:</strong> {shop.owner?.email || 'N/A'}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-base-350 dark:text-sm">
+                                <strong>Store Name:</strong> {shop.owner?.storeName || 'N/A'}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-base-350 dark:text-gray-300">
+                                <strong>Store Description:</strong> {shop.owner?.storeDescription || 'No description provided'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="divider my-4 sm:my-6 border-gray-200 dark:border-gray-700" />
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mt-3">
                     <div>
                         <p className="font-semibold text-base-350 dark:text-gray-100 mb-2">{shop.commission || '10%'}</p>
                         <p className="text-sm text-base-350 dark:text-gray-300">Commission</p>
@@ -381,22 +402,18 @@ const ShopDetail = () => {
                         <MdEdit size={15} /> Edit
                     </button>
                     <button
-                        className="btn btn-outline btn-error text-sm flex items-center gap-2 hover:bg-error hover:text-white transition-colors"
+                        className="btn btn-outline btn-error text-sm mt- flex items-center gap-2  hover:bg-error hover:text-white transition-colors"
                         onClick={() => setShowDeleteModal(true)}
                         disabled={deleteLoading}
                         aria-label={`Delete ${shop.shopname}`}
                     >
+
                         <MdDelete size={15} /> Delete
                     </button>
                 </div>
 
                 {showEditModal && (
-                    <div
-                        className="modal modal-open fixed inset-0 bg-base-200 bg-opacity-50 flex items-center justify-center z-50"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="edit-modal-title"
-                    >
+                    <div className="modal modal-open fixed inset-0 bg-base-200 bg-opacity-50 flex items-center justify-center z-50">
                         <div className="modal-box w-full max-w-lg sm:max-w-xl bg-base-350 dark:bg-gray-900 rounded-lg shadow-xl p-6 h-auto max-h-[90vh] overflow-auto">
                             <h3 id="edit-modal-title" className="text-xl font-semibold text-base-350 dark:text-gray-100 mb-4">
                                 Edit Shop
@@ -445,20 +462,6 @@ const ShopDetail = () => {
                                     {errors.address && <p className="text-error text-xs mt-1">{errors.address}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1" htmlFor="edit-phone">
-                                        Phone
-                                    </label>
-                                    <input
-                                        id="edit-phone"
-                                        type="text"
-                                        className={`input input-bordered w-full text-sm ${errors.phone ? 'input-error' : ''}`}
-                                        placeholder="+998901234567"
-                                        value={editFormData.phone}
-                                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                                    />
-                                    {errors.phone && <p className="text-error text-xs mt-1">{errors.phone}</p>}
-                                </div>
-                                <div>
                                     <label className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1" htmlFor="edit-description">
                                         Description
                                     </label>
@@ -485,8 +488,7 @@ const ShopDetail = () => {
                                                 setEditFormData({
                                                     ...editFormData,
                                                     location: { ...editFormData.location, lat: e.target.value },
-                                                })
-                                            }
+                                                })}
                                         />
                                         {errors.lat && <p className="text-error text-xs mt-1">{errors.lat}</p>}
                                     </div>
@@ -504,8 +506,7 @@ const ShopDetail = () => {
                                                 setEditFormData({
                                                     ...editFormData,
                                                     location: { ...editFormData.location, lon: e.target.value },
-                                                })
-                                            }
+                                                })}
                                         />
                                         {errors.lon && <p className="text-error text-xs mt-1">{errors.lon}</p>}
                                     </div>

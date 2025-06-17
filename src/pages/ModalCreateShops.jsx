@@ -10,7 +10,6 @@ const ModalCreateShops = () => {
   const token = useSelector((state) => state.user.token);
   const [formData, setFormData] = useState({
     shopname: '',
-    phone: '',
     address: '',
     description: '',
     lat: '',
@@ -75,7 +74,6 @@ const ModalCreateShops = () => {
     }
 
     if (!formData.shopname) return toast.error('Shop name is required');
-    if (!formData.phone) return toast.error('Phone number is required');
     if (!formData.address) return toast.error('Address is required');
     if (!formData.lat || !formData.lon) return toast.error('Location coordinates are required');
     if (!['basic', 'standard', 'premium'].includes(formData.TariffPlan))
@@ -88,7 +86,6 @@ const ModalCreateShops = () => {
     try {
       const payload = {
         shopname: formData.shopname,
-        phone: formData.phone,
         address: formData.address,
         description: formData.description,
         TariffPlan: formData.TariffPlan,
@@ -96,9 +93,8 @@ const ModalCreateShops = () => {
           lat: parseFloat(formData.lat),
           lon: parseFloat(formData.lon),
         },
-        logotype: formData.logotype || '', // Use base64 string or empty string if no file
+        logotype: '', // Omit the logotype
       };
-
       console.log('Payload:', payload); // Debug payload
 
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops`, {
@@ -146,13 +142,32 @@ const ModalCreateShops = () => {
           map.events.add('click', (e) => {
             const coords = e.get('coords');
             const [lat, lon] = coords;
-            setFormData((prev) => ({
-              ...prev,
-              lat: lat.toFixed(6),
-              lon: lon.toFixed(6),
-            }));
-            toast.success(`Location selected: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
-            setMapOpen(false);
+
+            // Reverse geocoding to get address
+            window.ymaps.geocode(coords).then((res) => {
+              const firstGeoObject = res.geoObjects.get(0);
+              const address = firstGeoObject ? firstGeoObject.getAddressLine() : 'Address not found';
+
+              setFormData((prev) => ({
+                ...prev,
+                lat: lat.toFixed(6),
+                lon: lon.toFixed(6),
+                address: address,
+              }));
+
+              toast.success(`Location selected: ${lat.toFixed(6)}, ${lon.toFixed(6)}, ${address}`);
+              setMapOpen(false);
+            }).catch((err) => {
+              console.error('Geocoding error:', err);
+              setFormData((prev) => ({
+                ...prev,
+                lat: lat.toFixed(6),
+                lon: lon.toFixed(6),
+                address: ' Street Buyuk Ipak Yuli, Mirzo-ulugbek Area, 100077, Uzbekistan',
+              }));
+              toast.error('Failed to fetch address');
+              setMapOpen(false);
+            });
           });
 
           mapRef.current = map;
@@ -187,21 +202,37 @@ const ModalCreateShops = () => {
             <p className="text-xs text-base-350">Upload your shop logo (PNG or JPG)</p>
           </div>
           <div className="bg-base-100 px-10 py-5 rounded-lg h-50 w-170">
-            <label
-              htmlFor="logo-upload"
-              className=" border border-dashed border-base-300 rounded-lg p-8 flex flex-col items-center justify-center hover:bg-base-200 transition cursor-pointer"
-            >
-              <FaCloudArrowDown className="text-5xl text-base-350 mb-2" />
-              <p className="text-sm">Upload an image or drag and drop</p>
-              <p className="text-xs text-base-350">PNG, JPG</p>
-              <input
-                id="logo-upload"
-                type="file"
-                accept="image/png,image ascendancyimage/jpeg"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-            </label>
+            {formData.logotype ? (
+              <div className="relative">
+                <img
+                  src={formData.logotype}
+                  alt="Shop Logo Preview"
+                  className="w-full h-32 object-contain rounded-lg"
+                />
+                <button
+                  onClick={() => setFormData((prev) => ({ ...prev, logotype: null }))}
+                  className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+                >
+                  <FaXmark size={20} />
+                </button>
+              </div>
+            ) : (
+              <label
+                htmlFor="logo-upload"
+                className="border border-dashed border-base-300 rounded-lg p-8 flex flex-col items-center justify-center hover:bg-base-200 transition cursor-pointer"
+              >
+                <FaCloudArrowDown className="text-5xl text-base-350 mb-2" />
+                <p className="text-sm">Upload an image or drag and drop</p>
+                <p className="text-xs text-base-350">PNG, JPG</p>
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </label>
+            )}
           </div>
         </div>
 
@@ -225,34 +256,6 @@ const ModalCreateShops = () => {
                 className="w-full border border-base-300 rounded-sm py-2 px-4"
                 placeholder="Enter shop name"
                 value={formData.shopname}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="phone" className="mb-2 font-semibold block">
-                Phone
-              </label>
-              <input
-                id="phone"
-                type="text"
-                name="phone"
-                className="w-full border border-base-300 rounded-sm py-2 px-4"
-                placeholder="Enter phone number"
-                value={formData.phone}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="address" className="mb-2 font-semibold block">
-                Address
-              </label>
-              <input
-                id="address"
-                type="text"
-                name="address"
-                className="w-full border border-base-300 rounded-sm py-2 px-4"
-                placeholder="Enter address"
-                value={formData.address}
                 onChange={handleInputChange}
               />
             </div>
@@ -281,6 +284,20 @@ const ModalCreateShops = () => {
             <p className="text-xs text-base-350">Add location info for your shop</p>
           </div>
           <div className="bg-base-100 p-6 rounded-lg shadow-md w-full md:w-[680px]">
+            <div className="mb-4">
+              <label htmlFor="address" className="mb-2 font-semibold block">
+                Address
+              </label>
+              <input
+                id="address"
+                type="text"
+                name="address"
+                className="w-full border border-base-300 rounded-sm py-2 px-4"
+                placeholder="Enter address"
+                value={formData.address}
+                onChange={handleInputChange}
+              />
+            </div>
             <div className="mb-4">
               <label htmlFor="lat" className="mb-2 font-semibold block">
                 Latitude
@@ -338,9 +355,9 @@ const ModalCreateShops = () => {
                 value={formData.TariffPlan}
                 onChange={handleInputChange}
               >
-                <option value="basic" className='text-white bg-base-200'>Basic</option>
-                <option value="standard" className='text-white bg-base-200'>Standard</option>
-                <option value="premium" className='text-white bg-base-200'>Premium</option>
+                <option value="basic" className="text-gray-200 bg-base-200">Basic</option>
+                <option value="standard" className="text-gray-200 bg-base-200">Standard</option>
+                <option value="premium" className="text-gray-200 bg-base-200">Premium</option>
               </select>
             </div>
           </div>
@@ -371,7 +388,6 @@ const ModalCreateShops = () => {
       {mapOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-4 rounded-lg w-11/12 md:w-3/4 h-[80vh] relative">
-            scourge
             <button
               onClick={() => setMapOpen(false)}
               className="absolute top-2 right-2 text-gray-500 hover:text-red-500"

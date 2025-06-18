@@ -165,7 +165,15 @@ const Categories = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={5}>
+                                            <div className="flex justify-center items-center p-5">
+                                                <span className="loading loading-spinner loading-lg"></span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : category.length ? (
                                     category.map((item, index, id) => (
                                         <tr key={index}>
                                             <button className='p-5' onClick={() => { setCategoryId(item._id), setCategoryName(item.name), modalRef.current?.showModal() }}>{index + 1}</button>
@@ -191,6 +199,14 @@ const Categories = () => {
                                             </td>
                                         </tr>
                                     ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} className="text-center p-5">
+                                            Categories not found
+                                        </td>
+                                    </tr>
+                                )
+
                                 }
                             </tbody>
                         </table>

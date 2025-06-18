@@ -2,12 +2,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { MdArrowBack, MdDelete, MdEdit } from 'react-icons/md';
-import { FaBan } from 'react-icons/fa';
+import { FaBan, FaUser } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 
 const ShopDetail = () => {
     const { id } = useParams();
-    const URL = import.meta.env.VITE_BACKEND_URL + '/api/auth/users';
     const navigate = useNavigate();
     const [shop, setShop] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -24,7 +23,8 @@ const ShopDetail = () => {
         TariffPlan: 'basic',
     });
     const [errors, setErrors] = useState({});
-    const defaultLogo = 'https://images-platform.99static.com//JO7XwrpaHhBzdsNOT-cGvqUuKEs=/81x82:917x918/fit-in/500x500/99designs-contests-attachments/103/103078/attachment_103078046';
+    const defaultLogo =
+        'https://images-platform.99static.com//JO7XwrpaHhBzdsNOT-cGvqUuKEs=/81x82:917x918/fit-in/500x500/99designs-contests-attachments/103/103078/attachment_103078046';
 
     const token = useSelector((state) => state.user.token);
 
@@ -39,6 +39,7 @@ const ShopDetail = () => {
 
             setLoading(true);
             try {
+                console.log('Fetching shop from:', `${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}`);
                 const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}`, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -58,6 +59,7 @@ const ShopDetail = () => {
                     throw new Error(errorMessage);
                 }
                 const data = await response.json();
+                console.log('Shop data:', data);
                 setShop(data);
                 setEditFormData({
                     shopname: data.shopname || '',
@@ -131,6 +133,7 @@ const ShopDetail = () => {
                 },
                 TariffPlan: editFormData.TariffPlan,
             };
+            console.log('Edit payload:', payload);
 
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}`, {
                 method: 'PUT',
@@ -253,6 +256,7 @@ const ShopDetail = () => {
                 setShowEditModal(false);
                 setShowDeleteModal(false);
                 setShowBanModal(false);
+                setShowOwnerModal(false); // Added for owner modal
             }
         };
         document.addEventListener('keydown', handleEsc);
@@ -272,7 +276,7 @@ const ShopDetail = () => {
 
     if (!shop) {
         return (
-            <div className="flex justify-center items-center h-screen w-screen bg-base-2000 dark:bg-gray-800">
+            <div className="flex justify-center items-center h-screen w-screen bg-base-200 dark:bg-gray-800">
                 <div className="text-center">
                     <p className="text-lg font-medium text-gray-500 dark:text-gray-400">Shop not found</p>
                     <button
@@ -288,7 +292,7 @@ const ShopDetail = () => {
     }
 
     return (
-        <div className="w-full bg-base-2000 dark:bg-gray-800 flex items-center justify-center p-4 sm:p-6">
+        <div className="w-full bg-base-200 dark:bg-gray-800 flex items-center justify-center p-4 sm:p-6">
             <div className="card w-full max-w-[90%] sm:max-w-[100%] bg-base-350 dark:bg-gray-900 shadow-lg rounded-xl p-6 sm:p-8 flex flex-col">
                 <button
                     className="btn btn-outline btn-success text-base-350 dark:text-primary-dark hover:bg-success hover:text-white dark:hover:bg-gray-700 mb-4 text-base flex items-center gap-2 self-start"
@@ -309,56 +313,55 @@ const ShopDetail = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="text-sm mt-2">
                                 <strong className="text-base-350 dark:text-gray-200 font-medium">Description:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1">{shop.description || 'No description provided'}</p>
+                                <p className="text-base-350 dark:text-gray-300 mt-1 text-xs">{shop.description || 'No description provided'}</p>
                             </div>
                             <div className="text-sm mt-2">
                                 <strong className="text-base-350 dark:text-gray-200 font-medium">Address:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1">{shop.address}</p>
+                                <p className="text-base-350 dark:text-gray-300 mt-1 text-xs">{shop.address}</p>
                             </div>
                             <div className="text-sm mt-2">
                                 <strong className="text-base-350 dark:text-gray-200 font-medium">Location:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1">
-                                    {shop.location ? `${shop.location.lat}, ${shop.location.lon}` : '41.321412, 69.2797'}
+                                <p className="text-base-350 dark:text-gray-300 mt-1 text-xs">
+                                    {shop.location ? `${shop.location.lat}, ${shop.location.lon}` : 'Not set'}
                                 </p>
                             </div>
                             <div className="text-sm mt-2">
                                 <strong className="text-base-350 dark:text-gray-200 font-medium">Status:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1 capitalize">{shop.status || 'Active'}</p>
+                                <p className="text-base-350 dark:text-gray-300 mt-1 capitalize text-xs">{shop.status || 'Active'}</p>
                             </div>
                             <div className="text-sm mt-2">
                                 <strong className="text-base-350 dark:text-gray-200 font-medium">Tariff Plan:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1 capitalize">{shop.TariffPlan || 'basic'}</p>
+                                <p className="text-base-350 dark:text-gray-300 mt-1 capitalize text-xs">{shop.TariffPlan || 'basic'}</p>
                             </div>
-                        </div>
-                    </div>
-                </div>
+                            <div className="relative inline-block text-xs mt-2">
+                                <div className="flex flex-col gap-2">
+                                    <strong className="text-base-350 dark:text-gray-200 font-medium text-xs">Info owner:</strong>
 
-                <div className="divider my-4 sm:my-6 border-gray-200 dark:border-gray-700" />
+                                    <span className="cursor-pointer group relative inline-block">
+                                        Owner Info
 
-                <div className="text-sm mt-2 ">
-                    <div className='flex justify-center'>
-                        <strong className="text-base-350 dark:text-gray-200 font-medium text-lg ">Owner Information:</strong>
-                    </div>
-                    <div className=" flex justify-between gap-4 mt-6">
-                        <div>
-                            <p className="text-base-350 dark:text-gray-300">
-                                <strong>Username:</strong> {shop.owner?.username || 'N/A'}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-base-350 dark:text-gray-300">
-                                <strong>Email:</strong> {shop.owner?.email || 'N/A'}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-base-350 dark:text-sm">
-                                <strong>Store Name:</strong> {shop.owner?.storeName || 'N/A'}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-base-350 dark:text-gray-300">
-                                <strong>Store Description:</strong> {shop.owner?.storeDescription || 'No description provided'}
-                            </p>
+                                        <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 hidden group-hover:flex bg-base-200 dark:bg-gray-900 p-4 rounded-xl shadow-xl w-96 flex-col text-left">
+                                            <h3 className="font-bold text-info mb-3 text-xl">Owner Information</h3>
+
+                                            <div className="text-sm text-base-350 dark:text-gray-300">
+                                                <p className="mb-1">
+                                                    <span className="font-semibold">Username:</span> {shop.owner?.username || 'N/A'}
+                                                </p>
+                                                <p className="mb-1">
+                                                    <span className="font-semibold">Email:</span> {shop.owner?.email || 'N/A'}
+                                                </p>
+                                                <p className="mb-1">
+                                                    <span className="font-semibold">Store Name:</span> {shop.owner?.storeName || 'N/A'}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">Store Description:</span> {shop.owner?.storeDescription || 'No description provided'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </span>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -382,8 +385,8 @@ const ShopDetail = () => {
                         <p className="font-semibold text-base-350 dark:text-gray-100 mb-2">{shop.withdraw || '0'}</p>
                         <p className="text-sm text-base-350 dark:text-gray-300">Withdraw</p>
                     </div>
-                </div>
 
+                </div>
                 <div className="flex justify-end mt-4 sm:mt-6 gap-3">
                     <button
                         className="btn btn-outline btn-success text-sm flex items-center gap-2 hover:bg-success hover:text-white transition-colors"
@@ -402,25 +405,32 @@ const ShopDetail = () => {
                         <MdEdit size={15} /> Edit
                     </button>
                     <button
-                        className="btn btn-outline btn-error text-sm mt- flex items-center gap-2  hover:bg-error hover:text-white transition-colors"
+                        className="btn btn-outline btn-error text-sm flex items-center gap-2 hover:bg-error hover:text-white transition-colors"
                         onClick={() => setShowDeleteModal(true)}
                         disabled={deleteLoading}
                         aria-label={`Delete ${shop.shopname}`}
                     >
-
                         <MdDelete size={15} /> Delete
                     </button>
                 </div>
 
                 {showEditModal && (
-                    <div className="modal modal-open fixed inset-0 bg-base-200 bg-opacity-50 flex items-center justify-center z-50">
+                    <div
+                        className="modal modal-open fixed inset-0 bg-base-200 bg-opacity-50 flex items-center justify-center z-50"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="edit-modal-title"
+                    >
                         <div className="modal-box w-full max-w-lg sm:max-w-xl bg-base-350 dark:bg-gray-900 rounded-lg shadow-xl p-6 h-auto max-h-[90vh] overflow-auto">
                             <h3 id="edit-modal-title" className="text-xl font-semibold text-base-350 dark:text-gray-100 mb-4">
                                 Edit Shop
                             </h3>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1" htmlFor="edit-logotype">
+                                    <label
+                                        className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
+                                        htmlFor="edit-logotype"
+                                    >
                                         Logo URL
                                     </label>
                                     <input
@@ -434,7 +444,10 @@ const ShopDetail = () => {
                                     {errors.logotype && <p className="text-error text-xs mt-1">{errors.logotype}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1" htmlFor="edit-shopname">
+                                    <label
+                                        className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
+                                        htmlFor="edit-shopname"
+                                    >
                                         Shop Name
                                     </label>
                                     <input
@@ -448,7 +461,10 @@ const ShopDetail = () => {
                                     {errors.shopname && <p className="text-error text-xs mt-1">{errors.shopname}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1" htmlFor="edit-address">
+                                    <label
+                                        className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
+                                        htmlFor="edit-address"
+                                    >
                                         Address
                                     </label>
                                     <input
@@ -462,7 +478,10 @@ const ShopDetail = () => {
                                     {errors.address && <p className="text-error text-xs mt-1">{errors.address}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1" htmlFor="edit-description">
+                                    <label
+                                        className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
+                                        htmlFor="edit-description"
+                                    >
                                         Description
                                     </label>
                                     <textarea
@@ -475,7 +494,10 @@ const ShopDetail = () => {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1" htmlFor="edit-lat">
+                                        <label
+                                            className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
+                                            htmlFor="edit-lat"
+                                        >
                                             Latitude
                                         </label>
                                         <input
@@ -488,12 +510,16 @@ const ShopDetail = () => {
                                                 setEditFormData({
                                                     ...editFormData,
                                                     location: { ...editFormData.location, lat: e.target.value },
-                                                })}
+                                                })
+                                            }
                                         />
                                         {errors.lat && <p className="text-error text-xs mt-1">{errors.lat}</p>}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1" htmlFor="edit-lon">
+                                        <label
+                                            className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
+                                            htmlFor="edit-lon"
+                                        >
                                             Longitude
                                         </label>
                                         <input
@@ -506,13 +532,17 @@ const ShopDetail = () => {
                                                 setEditFormData({
                                                     ...editFormData,
                                                     location: { ...editFormData.location, lon: e.target.value },
-                                                })}
+                                                })
+                                            }
                                         />
                                         {errors.lon && <p className="text-error text-xs mt-1">{errors.lon}</p>}
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1" htmlFor="edit-tariff">
+                                    <label
+                                        className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
+                                        htmlFor="edit-tariff"
+                                    >
                                         Tariff Plan
                                     </label>
                                     <select
@@ -536,7 +566,8 @@ const ShopDetail = () => {
                                     Cancel
                                 </button>
                                 <button
-                                    className={`btn btn-outline btn-primary text-sm hover:bg-primary-dark ${loading ? 'loading' : ''}`}
+                                    className={`btn btn-outline btn-primary text-sm hover:bg-primary-dark ${loading ? 'loading' : ''
+                                        }`}
                                     onClick={handleEditShop}
                                     disabled={loading || !token}
                                     aria-label="Save Changes"
@@ -561,7 +592,8 @@ const ShopDetail = () => {
                                 Delete Shop
                             </h3>
                             <p className="py-4 text-base-350 dark:text-gray-300">
-                                Are you sure you want to delete <span className="font-semibold">{shop.shopname}</span>? This action cannot be undone.
+                                Are you sure you want to delete <span className="font-semibold">{shop.shopname}</span>? This
+                                action cannot be undone.
                             </p>
                             <div className="modal-action mt-2 flex justify-end gap-3">
                                 <button
@@ -598,7 +630,8 @@ const ShopDetail = () => {
                                 Ban Shop
                             </h3>
                             <p className="py-4 text-base-350 dark:text-gray-300">
-                                Are you sure you want to ban <span className="font-semibold">{shop.shopname}</span>? This action cannot be undone.
+                                Are you sure you want to ban <span className="font-semibold">{shop.shopname}</span>? This action
+                                cannot be undone.
                             </p>
                             <div className="modal-action mt-2 flex justify-end gap-3">
                                 <button
@@ -622,6 +655,8 @@ const ShopDetail = () => {
                         </div>
                     </div>
                 )}
+
+
             </div>
         </div>
     );

@@ -10,6 +10,7 @@ const Sellers = () => {
   const [error, setError] = useState(null)
   const [sellers, setSellers] = useState([])
 
+
   const getSellers = async () => {
     setLoading(true)
     setError(null)

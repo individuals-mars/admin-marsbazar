@@ -19,7 +19,7 @@ const Sidebar = () => {
       children: [
         { path: "/dashboard", label: "Dashboard" },
         { path: "/shops", label: "Shops" },
-        { path: "/modalcreateshops", label: "Modal Create Shops" },
+        { path: "/modalcreateshops", label: "Create Shops" },
       ]
     },
     {
@@ -33,6 +33,14 @@ const Sidebar = () => {
       ]
     },
     {
+      label: "Categories",
+      icon: <BsListNested />,
+      children: [
+        { path: "/categories", label: "Categories" },
+        { path: "/subcategories", label: "Sub Categories " },
+      ]
+    },
+    {
       label: "Products",
       icon: <RiShoppingBasket2Fill />,
       children: [
@@ -42,7 +50,6 @@ const Sidebar = () => {
       ]
     },
     { path: "/orders", icon: <LuInbox />, label: "Orders" },
-    { path: "/categories", icon: <BsListNested />, label: "Categories" },
     { path: "/envelope", icon: <BiSolidCategoryAlt />, label: "Envelope" },
   ];
 
@@ -62,7 +69,7 @@ const Sidebar = () => {
                 {item.children.map((child, childIndex) => {
                   const isChildActive = child.path && location.pathname === child.path;
                   return (
-                    <li 
+                    <li
                       key={childIndex}
                       className={`rounded-xl w-full ${isChildActive ? "bg-base-300 text-primary font-semibold" : ""}`}
                     >

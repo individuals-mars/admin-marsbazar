@@ -29,6 +29,7 @@ import CreateProducts from './pages/CreateProducts.jsx';
 import Enventory from './pages/Enventory.jsx';
 import ShopsDetail from './pages/ShopsDetail.jsx';
 import ModalCreateShops from './pages/ModalCreateShops.jsx';
+import Subcategories from './pages/Subcategories.jsx';
 
 
 const router = createBrowserRouter([
@@ -54,6 +55,8 @@ const router = createBrowserRouter([
       { path: '/Enventory', element: <Enventory /> },
       { path: '/envelope', element: <Envelope /> },
       { path: '/modalcreateshops', element: <ModalCreateShops /> },
+      { path: 'subcategories', element: <Subcategories /> },
+
     ]
   },
   {

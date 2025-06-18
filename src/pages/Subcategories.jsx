@@ -8,21 +8,24 @@ import { MdClose } from 'react-icons/md';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const Categories = () => {
-    const URL = import.meta.env.VITE_BACKEND_URL + '/api/categories';
+const Subcategories = () => {
+    const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+    const SUBCATEGORY_URL = `${BASE_URL}/api/subcategories`;
+    const CATEGORY_URL = `${BASE_URL}/api/categories`;
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState({
-        title: '',
-        icon: '',
+        name: '',
+        categoryId: '',
     });
+    const [subcategories, setSubcategories] = useState([]);
     const [categories, setCategories] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
     const modalRef = useRef(null);
     const textRef = useRef(null);
-    const [categoryID, setCategoryId] = useState(null);
-    const [categoryName, setCategoryName] = useState(null);
+    const [subcategoryId, setSubcategoryId] = useState(null);
+    const [subcategoryName, setSubcategoryName] = useState(null);
 
     const handleChange = (e) => {
         setData({ ...data, [e.target.name]: e.target.value });
@@ -30,7 +33,7 @@ const Categories = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!data.title || !data.icon) {
+        if (!data.name || !data.categoryId) {
             setError('Please fill all fields');
             toast.error('Please fill all fields');
             return;
@@ -40,17 +43,17 @@ const Categories = () => {
 
         try {
             if (isEditing) {
-                // Update category
-                const response = await axios.put(`${URL}/${editId}`, data);
-                toast.success('Category updated successfully!');
-                setCategories(categories.map(item => 
+                // Update subcategory
+                const response = await axios.put(`${SUBCATEGORY_URL}/${editId}`, data);
+                toast.success('Subcategory updated successfully!');
+                setSubcategories(subcategories.map(item => 
                     item._id === editId ? { ...item, ...data } : item
                 ));
             } else {
-                // Create category
-                const response = await axios.post(URL, data);
-                toast.success('Category created successfully!');
-                setCategories([...categories, response.data]);
+                // Create subcategory
+                const response = await axios.post(SUBCATEGORY_URL, data);
+                toast.success('Subcategory created successfully!');
+                setSubcategories([...subcategories, response.data]);
             }
             resetForm();
         } catch (error) {
@@ -61,46 +64,56 @@ const Categories = () => {
         }
     };
 
-    const getCategories = async () => {
+    const getSubcategories = async () => {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await axios.get(URL);
+            const response = await axios.get(SUBCATEGORY_URL);
+            setSubcategories(response.data);
+        } catch (e) {
+            setError(e.response?.data?.message || 'Error fetching subcategories');
+            toast.error(e.response?.data?.message || 'Error fetching subcategories');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getCategories = async () => {
+        try {
+            const response = await axios.get(CATEGORY_URL);
             setCategories(response.data);
         } catch (e) {
             setError(e.response?.data?.message || 'Error fetching categories');
             toast.error(e.response?.data?.message || 'Error fetching categories');
-        } finally {
-            setLoading(false);
         }
     };
 
-    const deleteCategory = async (id) => {
+    const deleteSubcategory = async (id) => {
         try {
-            await axios.delete(`${URL}/${id}`);
-            setCategories(categories.filter((item) => item._id !== id));
-            toast.success('Category deleted successfully!');
+            await axios.delete(`${SUBCATEGORY_URL}/${id}`);
+            setSubcategories(subcategories.filter((item) => item._id !== id));
+            toast.success('Subcategory deleted successfully!');
         } catch (error) {
-            setError(error.response?.data?.message || 'Error deleting category');
-            toast.error(error.response?.data?.message || 'Error deleting category');
+            setError(error.response?.data?.message || 'Error deleting subcategory');
+            toast.error(error.response?.data?.message || 'Error deleting subcategory');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleEdit = (category) => {
+    const handleEdit = (subcategory) => {
         setData({
-            title: category.title,
-            icon: category.icon,
+            name: subcategory.name,
+            categoryId: subcategory.categoryId,
         });
-        setEditId(category._id);
+        setEditId(subcategory._id);
         setIsEditing(true);
         document.getElementById('my-drawer-4').checked = true;
     };
 
     const resetForm = () => {
-        setData({ title: '', icon: '' });
+        setData({ name: '', categoryId: '' });
         setIsEditing(false);
         setEditId(null);
         document.getElementById('my-drawer-4').checked = false;
@@ -116,6 +129,7 @@ const Categories = () => {
     };
 
     useEffect(() => {
+        getSubcategories();
         getCategories();
     }, []);
 
@@ -124,45 +138,50 @@ const Categories = () => {
             <div>
                 <div className='grid grid-cols-2'>
                     <TitleTemplate 
-                        title='Categories' 
-                        description='Manage your categories'
+                        title='Subcategories' 
+                        description='Manage your subcategories'
                     />
                     <div className='drawer drawer-end flex justify-end'>
                         <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
                         <div className="drawer-content">
                             <label htmlFor="my-drawer-4" className="drawer-button btn btn-primary">
-                                {isEditing ? 'Edit Category' : 'Add Category'}
+                                {isEditing ? 'Edit Subcategory' : 'Add Subcategory'}
                             </label>
                         </div>
                         <div className="drawer-side">
                             <label htmlFor="my-drawer-4" className="drawer-overlay"></label>
                             <div className="flex flex-col gap-8 items-center justify-center menu bg-base-200 text-base-content min-h-full w-80 p-4">
                                 <h2 className='text-2xl font-medium'>
-                                    {isEditing ? 'Edit Category' : 'Add Category'}
+                                    {isEditing ? 'Edit Subcategory' : 'Add Subcategory'}
                                 </h2>
                                 <div className='flex w-full flex-col gap-4'>
                                     <fieldset className="fieldset">
-                                        <legend className="fieldset-legend">Category Title:</legend>
+                                        <legend className="fieldset-legend">Subcategory Name:</legend>
                                         <input 
-                                            name='title' 
+                                            name='name' 
                                             type="text" 
-                                            value={data.title} 
+                                            value={data.name} 
                                             onChange={handleChange} 
                                             className='input input-primary' 
-                                            placeholder='Title' 
+                                            placeholder='Name' 
                                         />
                                     </fieldset>
 
                                     <fieldset className="fieldset">
-                                        <legend className="fieldset-legend">Category Icon:</legend>
-                                        <input 
-                                            name='icon' 
-                                            type="text" 
-                                            value={data.icon} 
-                                            onChange={handleChange} 
-                                            className='input input-primary' 
-                                            placeholder='Icon (e.g., fa-icon-name)' 
-                                        />
+                                        <legend className="fieldset-legend">Parent Category:</legend>
+                                        <select
+                                            name='categoryId'
+                                            value={data.categoryId}
+                                            onChange={handleChange}
+                                            className='select select-primary'
+                                        >
+                                            <option value="">Select a category</option>
+                                            {categories.map((category) => (
+                                                <option key={category._id} value={category._id}>
+                                                    {category.title}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </fieldset>
 
                                     {error && <p className="text-error">{error}</p>}
@@ -200,8 +219,8 @@ const Categories = () => {
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Title</th>
-                                    <th>Icon</th>
+                                    <th>Name</th>
+                                    <th>Parent Category</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -214,14 +233,14 @@ const Categories = () => {
                                             </div>
                                         </td>
                                     </tr>
-                                ) : categories.length ? (
-                                    categories.map((item, index) => (
+                                ) : subcategories.length ? (
+                                    subcategories.map((item, index) => (
                                         <tr key={item._id}>
                                             <td>
                                                 <button 
                                                     onClick={() => { 
-                                                        setCategoryId(item._id); 
-                                                        setCategoryName(item.title); 
+                                                        setSubcategoryId(item._id); 
+                                                        setSubcategoryName(item.name); 
                                                         modalRef.current?.showModal();
                                                     }}
                                                 >
@@ -229,8 +248,8 @@ const Categories = () => {
                                                 </button>
                                                 <dialog ref={modalRef} id="my_modal_5" className="modal modal-bottom sm:modal-middle">
                                                     <div className="modal-box">
-                                                        <h3 className="font-bold text-lg">Category: {categoryName}</h3>
-                                                        <p ref={textRef} className="py-4 text-xl">{categoryID}</p>
+                                                        <h3 className="font-bold text-lg">Subcategory: {subcategoryName}</h3>
+                                                        <p ref={textRef} className="py-4 text-xl">{subcategoryId}</p>
                                                         <div className="modal-action">
                                                             <form method="dialog" className='flex gap-2'>
                                                                 <button className="btn btn-error px-5">
@@ -244,8 +263,10 @@ const Categories = () => {
                                                     </div>
                                                 </dialog>
                                             </td>
-                                            <td>{item.title}</td>
-                                            <td>{item.icon}</td>
+                                            <td>{item.name}</td>
+                                            <td>
+                                                {categories.find(cat => cat._id === item.categoryId)?.title || 'Unknown'}
+                                            </td>
                                             <td className='flex justify-end gap-2'>
                                                 <button 
                                                     onClick={() => handleEdit(item)}
@@ -254,7 +275,7 @@ const Categories = () => {
                                                     <FiEdit2 className='text-xl' />
                                                 </button>
                                                 <button 
-                                                    onClick={() => deleteCategory(item._id)}
+                                                    onClick={() => deleteSubcategory(item._id)}
                                                     className='btn btn-error px-5'
                                                     disabled={loading}
                                                 >
@@ -266,7 +287,7 @@ const Categories = () => {
                                 ) : (
                                     <tr>
                                         <td colSpan={4} className="text-center p-5">
-                                            No categories found
+                                            No subcategories found
                                         </td>
                                     </tr>
                                 )}
@@ -279,4 +300,4 @@ const Categories = () => {
     );
 };
 
-export default Categories;
+export default Subcategories;

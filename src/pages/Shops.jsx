@@ -78,7 +78,7 @@ const Shops = () => {
 
             {fetchLoading ? (
                 <div className="flex flex-wrap gap-6">
-                    {[...Array(4)].map((_, i) => (
+                    {[...Array(7)].map((_, i) => (
                         <div key={i} className="skeleton h-[260px] w-[390px] mt-3"></div>
                     ))}
                 </div>

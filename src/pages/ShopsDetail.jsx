@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { MdArrowBack, MdDelete, MdEdit } from 'react-icons/md';
-import { FaBan, FaUser } from 'react-icons/fa';
+import { FaBan } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 
 const ShopDetail = () => {
@@ -14,6 +14,11 @@ const ShopDetail = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showBanModal, setShowBanModal] = useState(false);
+    const [banFormData, setBanFormData] = useState({
+        from: '',
+        to: '',
+        reason: '',
+    });
     const [editFormData, setEditFormData] = useState({
         shopname: '',
         address: '',
@@ -50,6 +55,7 @@ const ShopDetail = () => {
                     let errorMessage = 'Failed to fetch shop details';
                     try {
                         const text = await response.text();
+                        console.log('Response status:', response.status, 'Response text:', text);
                         if (text.startsWith('<!DOCTYPE')) {
                             throw new Error('Received HTML instead of JSON. Check if /api/shops/:id endpoint exists.');
                         }
@@ -60,6 +66,7 @@ const ShopDetail = () => {
                 }
                 const data = await response.json();
                 console.log('Shop data:', data);
+                console.log('Owner data:', data.owner); // Debug owner data
                 setShop(data);
                 setEditFormData({
                     shopname: data.shopname || '',
@@ -173,14 +180,29 @@ const ShopDetail = () => {
             return;
         }
 
+        if (!banFormData.from || !banFormData.to || !banFormData.reason.trim()) {
+            toast.error('Please fill out all ban fields');
+            return;
+        }
+
         setDeleteLoading(true);
+
         try {
+            const payload = {
+                from: banFormData.from,
+                to: banFormData.to,
+                reason: banFormData.reason.trim(),
+            };
+
+            console.log("Ban payload", payload);
+
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/ban/${id}`, {
-                method: 'PATCH',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
@@ -207,6 +229,7 @@ const ShopDetail = () => {
             setDeleteLoading(false);
         }
     };
+
 
     const handleDeleteShop = async () => {
         if (!token) {
@@ -256,7 +279,6 @@ const ShopDetail = () => {
                 setShowEditModal(false);
                 setShowDeleteModal(false);
                 setShowBanModal(false);
-                setShowOwnerModal(false); // Added for owner modal
             }
         };
         document.addEventListener('keydown', handleEsc);
@@ -317,7 +339,7 @@ const ShopDetail = () => {
                             </div>
                             <div className="text-sm mt-2">
                                 <strong className="text-base-350 dark:text-gray-200 font-medium">Address:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1 text-xs">{shop.address}</p>
+                                <p className="text-base-350 dark:text-gray-300 mt-1 text-xs">{shop.address || 'Not set'}</p>
                             </div>
                             <div className="text-sm mt-2">
                                 <strong className="text-base-350 dark:text-gray-200 font-medium">Location:</strong>
@@ -333,35 +355,42 @@ const ShopDetail = () => {
                                 <strong className="text-base-350 dark:text-gray-200 font-medium">Tariff Plan:</strong>
                                 <p className="text-base-350 dark:text-gray-300 mt-1 capitalize text-xs">{shop.TariffPlan || 'basic'}</p>
                             </div>
-                            <div className="relative inline-block text-xs mt-2">
-                                <div className="flex flex-col gap-2">
-                                    <strong className="text-base-350 dark:text-gray-200 font-medium text-xs">Info owner:</strong>
-
-                                    <span className="cursor-pointer group relative inline-block">
-                                        Owner Info
-
+                            <div className="text-sm mt-2 flex flex-col">
+                                <strong className="text-base-350 dark:text-gray-200 font-medium">Owner Info:</strong>
+                                <div className="relative inline-block text-xs mt-1">
+                                    <span className="cursor-pointer group relative inline-block text-base-350 dark:text-gray-300 underline">
+                                        View Owner Info
                                         <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 hidden group-hover:flex bg-base-200 dark:bg-gray-900 p-4 rounded-xl shadow-xl w-96 flex-col text-left">
-                                            <h3 className="font-bold text-info mb-3 text-xl">Owner Information</h3>
+                                            <h3 className="font-bold text-info mb-3 text-lg">Owner Information</h3>
+                                            {shop.owner ? (
+                                                <div className="space-y-4 p-4">
+                                                    <div className="flex">
+                                                        <span className="w-20 font-semibold">Username:</span>
+                                                        <span>{shop.owner.username || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex">
+                                                        <span className="w-20 font-semibold">Email:</span>
+                                                        <a href={`mailto:${shop.owner.email}`} className="text-blue-600 hover:underline">
+                                                            {shop.owner.email || 'N/A'}
+                                                        </a>
+                                                    </div>
+                                                    <div className="flex">
+                                                        <span className="w-20 font-semibold">Store:</span>
+                                                        <span>{shop.owner.storeName || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex">
+                                                        <span className="w-20 font-semibold">Desc:</span>
+                                                        <p className="flex-1">{shop.owner.storeDescription || 'No description provided'}</p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-center py-4 text-gray-500">No owner assigned</p>
+                                            )}
 
-                                            <div className="text-sm text-base-350 dark:text-gray-300">
-                                                <p className="mb-1">
-                                                    <span className="font-semibold">Username:</span> {shop.owner?.username || 'N/A'}
-                                                </p>
-                                                <p className="mb-1">
-                                                    <span className="font-semibold">Email:</span> {shop.owner?.email || 'N/A'}
-                                                </p>
-                                                <p className="mb-1">
-                                                    <span className="font-semibold">Store Name:</span> {shop.owner?.storeName || 'N/A'}
-                                                </p>
-                                                <p>
-                                                    <span className="font-semibold">Store Description:</span> {shop.owner?.storeDescription || 'No description provided'}
-                                                </p>
-                                            </div>
                                         </div>
                                     </span>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -385,8 +414,8 @@ const ShopDetail = () => {
                         <p className="font-semibold text-base-350 dark:text-gray-100 mb-2">{shop.withdraw || '0'}</p>
                         <p className="text-sm text-base-350 dark:text-gray-300">Withdraw</p>
                     </div>
-
                 </div>
+
                 <div className="flex justify-end mt-4 sm:mt-6 gap-3">
                     <button
                         className="btn btn-outline btn-success text-sm flex items-center gap-2 hover:bg-success hover:text-white transition-colors"
@@ -566,8 +595,7 @@ const ShopDetail = () => {
                                     Cancel
                                 </button>
                                 <button
-                                    className={`btn btn-outline btn-primary text-sm hover:bg-primary-dark ${loading ? 'loading' : ''
-                                        }`}
+                                    className={`btn btn-outline btn-primary text-sm hover:bg-primary-dark ${loading ? 'loading' : ''}`}
                                     onClick={handleEditShop}
                                     disabled={loading || !token}
                                     aria-label="Save Changes"
@@ -592,8 +620,7 @@ const ShopDetail = () => {
                                 Delete Shop
                             </h3>
                             <p className="py-4 text-base-350 dark:text-gray-300">
-                                Are you sure you want to delete <span className="font-semibold">{shop.shopname}</span>? This
-                                action cannot be undone.
+                                Are you sure you want to delete <span className="font-semibold">{shop.shopname}</span>? This action cannot be undone.
                             </p>
                             <div className="modal-action mt-2 flex justify-end gap-3">
                                 <button
@@ -630,9 +657,42 @@ const ShopDetail = () => {
                                 Ban Shop
                             </h3>
                             <p className="py-4 text-base-350 dark:text-gray-300">
-                                Are you sure you want to ban <span className="font-semibold">{shop.shopname}</span>? This action
-                                cannot be undone.
+                                Are you sure you want to ban <span className="font-semibold">{shop.shopname}</span>? This action cannot be undone.
                             </p>
+
+                            <div className="py-4">
+                                <label htmlFor="ban-from" className="block text-base-350 dark:text-gray-300">Ban From:</label>
+                                <input
+                                    type="datetime-local"
+                                    id="ban-from"
+                                    value={banFormData.from}
+                                    onChange={(e) => setBanFormData({ ...banFormData, from: e.target.value })}
+                                    className="input input-bordered w-full"
+                                />
+                            </div>
+
+                            <div className="py-4">
+                                <label htmlFor="ban-to" className="block text-base-350 dark:text-gray-300">Ban Until:</label>
+                                <input
+                                    type="datetime-local"
+                                    id="ban-to"
+                                    value={banFormData.to}
+                                    onChange={(e) => setBanFormData({ ...banFormData, to: e.target.value })}
+                                    className="input input-bordered w-full"
+                                />
+                            </div>
+
+                            <div className="py-4">
+                                <label htmlFor="ban-reason" className="block text-base-350 dark:text-gray-300">Reason:</label>
+                                <textarea
+                                    id="ban-reason"
+                                    value={banFormData.reason}
+                                    onChange={(e) => setBanFormData({ ...banFormData, reason: e.target.value })}
+                                    className="textarea textarea-bordered w-full"
+                                    rows={3}
+                                />
+                            </div>
+
                             <div className="modal-action mt-2 flex justify-end gap-3">
                                 <button
                                     className="btn btn-outline btn-sm"
@@ -655,7 +715,6 @@ const ShopDetail = () => {
                         </div>
                     </div>
                 )}
-
 
             </div>
         </div>

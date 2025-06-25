@@ -7,6 +7,7 @@ import { RiShoppingBasket2Fill } from "react-icons/ri";
 import { FaUsers } from "react-icons/fa";
 import { LuInbox } from "react-icons/lu";
 import logo from '../assets/logo.png';
+import { SiSpringCreators } from "react-icons/si";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -20,6 +21,7 @@ const Sidebar = () => {
         { path: "/dashboard", label: "Dashboard" },
         { path: "/shops", label: "Shops" },
         { path: "/modalcreateshops", label: "Create Shops" },
+        { path: "/orders", label: "Orders" },
       ]
     },
     {
@@ -46,13 +48,18 @@ const Sidebar = () => {
       children: [
         { path: "/products", label: "All Products" },
         { path: "/CreateProduct", label: "Create Product" },
-        { path: "/enventory", label: "Enventory" },
       ]
     },
-    { path: "/orders", icon: <LuInbox />, label: "Orders" },
-    { path: "/envelope", icon: <BiSolidCategoryAlt />, label: "Envelope" },
+    {
+      label: "Coupons",
+      icon: <BiSolidCategoryAlt />,
+      children: [
+        { path: "/envelope", label: "My Coupons" },
+        { path: "/createcupon", label: "Create Coupons" },
+      ]
+    },
+    { path: "/enventory", icon: <SiSpringCreators />, label: "Enventory" },
   ];
-
   const renderMenuItems = (items) =>
     items.map((item, index) => {
       const isActive = item.path && location.pathname === item.path;
@@ -106,7 +113,7 @@ const Sidebar = () => {
     });
 
   return (
-    <div className="fixed top-0 left-0 h-screen w-64 flex flex-col bg-base-100 border-r border-base-300 z-50">
+    <div className="fixed top-0 left-0 h-screen w-64 overflow-y-autoflex flex-col bg-base-100 border-r border-base-300 z-50">
       {/* Логотип */}
       <div className="flex flex-col justify-center items-center py-4 px-2">
         <Link to="/dashboard">
@@ -116,7 +123,7 @@ const Sidebar = () => {
       </div>
 
       {/* Меню с прокруткой */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 overflow-x-hidden">
         <ul className="menu px-1 py-1 text-base-content auto scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-transparent w-full flex-1">
           {renderMenuItems(menuItems)}
         </ul>

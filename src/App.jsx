@@ -17,7 +17,7 @@ function App() {
 
     <>
       <main className='flex'>
-        <aside className='w-2/12 relative overflow-y-auto  '>
+        <aside className='w-2/12 relative overflow-y-auto'>
           <Sidebar />
         </aside>
         <section className='flex flex-col  flex-1 bg-base-200'>

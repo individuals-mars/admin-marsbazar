@@ -6,6 +6,7 @@ import { FiSettings } from "react-icons/fi";
 import ContainerTemplate from './ContainerTemplate';
 import { useDispatch } from 'react-redux';
 import { setTheme } from '../store/themeSlice';
+import Notifications from './ui/Notifications';
 
 
 
@@ -43,7 +44,7 @@ const Navbar = () => {
                         </svg>
                     </label>
                     <div className='flex gap-5 items-center'>
-                        <button className='btn btn-primary text-xl'><GoBell /></button>
+                        <Notifications/>
                         <button className='btn btn-primary text-xl'><LuMessageSquareMore /></button>
                         <button className='btn btn-neutral text-xl'><SlPresent /></button>
                         <button className='btn btn-error text-xl'><FiSettings className='text-white'/></button>

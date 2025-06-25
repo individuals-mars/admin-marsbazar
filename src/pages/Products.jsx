@@ -1,308 +1,211 @@
-import React, { useEffect } from 'react'
-import ContainerTemplate from '../components/ContainerTemplate'
-import TitleTemplate from '../components/TitleTemplate'
-import { IoIosArrowDown } from "react-icons/io";
-import { CiFilter } from "react-icons/ci";
-import { GoPlus } from "react-icons/go";
-import { useState } from 'react'
-import axios from 'axios'
+
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { CiImageOn } from "react-icons/ci";
+import ContainerTemplate from '../components/ContainerTemplate';
+import TitleTemplate from '../components/TitleTemplate';
+import { IoIosArrowDown } from 'react-icons/io';
+import { CiFilter } from 'react-icons/ci';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const Products = () => {
-  const getURL = import.meta.env.VITE_BACKEND_URL + '/api/products'
-  const token = useSelector((state) => state?.user.token)
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [data, setData] = useState({
-    name: '',
-    category: '',
-    seller: '',
-    price: '',
-    img: '',
-    description: '',
-  })
-
-  console.log('token', token);
-
-
-  const handleChange = (e) => {
-    setData({ ...data, [e.target.name]: e.target.value })
-  }
-
-
-  const handleSubmit = async (e) => {
-    console.log('data', data);
-    if (!data.name || !data.category || !data.seller || !data.price || !data.img || !data.description) {
-      console.log("To'lig'mas");
-      setError("To'ldir")
-      return
-    }
-    setLoading(true)
-    setError(null)
-
-
-    try {
-      const token = localStorage.getItem('token')
-      const response = await axios.post(getURL, data, {
-        headers: {Authorization: `Bearer ${token}`},
-      })
-      console.log(response.data);
-      fetchProducts()
-    } catch (error) {
-      setError(error, 'Xato bich')
-    } finally {
-      setLoading(false)
-      setError(null) 
-      setData({
-        name: '',
-        category: '',
-        seller: '',
-        price: '',
-        img: '',
-        description: '',
-      })
-    }
-  }
+  const getURL = import.meta.env.VITE_BACKEND_URL + '/api/products/all';
+  const token = useSelector((state) => state?.user?.token);
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilter, setShowFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('default');
 
   const fetchProducts = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const response = await axios.get(getURL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      console.log('response', response.data);
-      setProducts(response.data)
-      setLoading(false)
-    } catch (error) {
-      setLoading(false)
-      setError(error)
-      console.error("Xato", error)
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log('Fetched products:', response.data);
+      setProducts(response.data);
+      setFilteredProducts(response.data);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError('Failed to load products');
+      toast.error('Failed to load products');
+    } finally {
+      setLoading(false);
     }
-  }
-  
+  };
+
   useEffect(() => {
-    fetchProducts()
-  }, [])
+    if (token) fetchProducts();
+    else {
+      setError('Please log in to view products');
+      toast.error('Please log in to view products');
+    }
+  }, [token]);
+
+  useEffect(() => {
+    let result = [...products];
+
+    // Search filter
+    if (searchQuery) {
+      result = result.filter((product) =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Show filter
+    if (showFilter === 'active') {
+      result = result.filter((product) => product.stock > 0);
+    } else if (showFilter === 'out-of-stock') {
+      result = result.filter((product) => product.stock === 0);
+    }
+
+    // Sort
+    if (sortBy === 'price-low-high') {
+      result.sort((a, b) => (a.price?.sellingPrice || 0) - (b.price?.sellingPrice || 0));
+    } else if (sortBy === 'price-high-low') {
+      result.sort((a, b) => (b.price?.sellingPrice || 0) - (a.price?.sellingPrice || 0));
+    }
+
+
+    setFilteredProducts(result);
+  }, [searchQuery, showFilter, sortBy, products]);
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
   return (
     <ContainerTemplate>
-      <div className='flex items-center justify-between gap-3'>
-        <TitleTemplate title='Products' description='Manage your products here' />
-        <div className='flex gap-2 justify-center w-2/3'>
-          <label className="input input-primary">
-            <input type="search" required placeholder="Search" />
-            <svg className="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <g
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                strokeWidth="2.5"
-                fill="none"
-                stroke="currentColor"
-              >
+      <div className="flex items-center justify-between gap-3">
+        <TitleTemplate title="Products" description="View and manage your products here" />
+        <div className="flex gap-2 justify-center w-2/3">
+          <label className="input input-bordered border-base-200 dark:border-gray-600">
+            <input
+              type="search"
+              placeholder="Search products"
+              className="text-sm"
+              value={searchQuery}
+              onChange={handleSearch}
+            />
+            <svg
+              className="h-[1em] text-gray-500 dark:text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <g strokeLinejoin="round" strokeLinecap="round" strokeWidth="2.5" fill="none" stroke="currentColor">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.3-4.3"></path>
               </g>
             </svg>
           </label>
           <details className="dropdown">
-            <summary className="btn border bg-base-100 border-primary rounded-lg">
-              <span className='flex items-center gap-2'>
-                <p className='font-normal'>Show: <span className='font-bold'>All products</span></p>
+            <summary className="btn btn-neutral border-base-200 dark:border-gray-600 rounded-lg text-sm">
+              <span className="flex items-center gap-2">
+                <p>Show: <span className="font-medium">{showFilter === 'all' ? 'All products' : showFilter === 'active' ? 'Active' : 'Out of stock'}</span></p>
                 <IoIosArrowDown />
               </span>
             </summary>
-            <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-              <li><a>Item 1</a></li>
-              <li><a>Item 2</a></li>
+            <ul className="menu dropdown-content bg-base-100 dark:bg-gray-800 rounded-box z-10 w-52 p-2 border border-base-200 dark:border-gray-700">
+              <li><a onClick={() => setShowFilter('all')}>All products</a></li>
+              <li><a onClick={() => setShowFilter('active')}>Active products</a></li>
+              <li><a onClick={() => setShowFilter('out-of-stock')}>Out of stock</a></li>
             </ul>
           </details>
           <details className="dropdown">
-            <summary className="btn border bg-base-100 border-primary rounded-lg">
-              <span className='flex items-center gap-2'>
-                <p className='font-normal'>Sort by: <span className='font-bold'>Default</span></p>
+            <summary className="btn btn-neutral border-base-200 dark:border-gray-600 rounded-lg text-sm">
+              <span className="flex items-center gap-2">
+                <p>Sort by: <span className="font-medium">{sortBy === 'default' ? 'Default' : sortBy === 'price-low-high' ? 'Price: Low to High' : sortBy === 'price-high-low' ? 'Price: High to Low' : 'Name: A-Z'}</span></p>
                 <IoIosArrowDown />
               </span>
             </summary>
-            <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-              <li><a>Item 1</a></li>
-              <li><a>Item 2</a></li>
+            <ul className="menu dropdown-content bg-base-100 dark:bg-gray-800 rounded-box z-10 w-52 p-2 border border-base-200 dark:border-gray-700">
+              <li><a onClick={() => setSortBy('default')}>Default</a></li>
+              <li><a onClick={() => setSortBy('price-low-high')}>Price: Low to High</a></li>
+              <li><a onClick={() => setSortBy('price-high-low')}>Price: High to Low</a></li>
+              <li><a onClick={() => setSortBy('name-az')}>Name: A-Z</a></li>
             </ul>
           </details>
-          <button className="btn bg-primary rounded-lg">
-            <CiFilter className='text-2xl' />
+          <button className="btn btn-neutral rounded-lg text-sm">
+            <CiFilter className="text-xl" />
             Filter
           </button>
         </div>
-        <div >
-          <div className="drawer drawer-end">
-            <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
-            <div className="drawer-content">
-              <label htmlFor="my-drawer-4" className="drawer-button btn btn-primary"> <GoPlus className='text-xl' /> Add product</label>
-            </div>
-            <div className="drawer-side">
-              <label htmlFor="my-drawer-4" aria-label="close sidebar" className="drawer-overlay"></label>
-              <div className="flex flex-col rounded-l-xl gap-8 items-center justify-center menu bg-base-200 text-base-content min-h-full w-[50%] p-4">
-                <h2 className='text-2xl text-center font-medium'>Add product</h2>
-                <div className='grid grid-cols-2 w-full'>
-                 <div>
-                   <fieldset className="fieldset">
-                    <legend className="fieldset-legend">Product name:</legend>
-                    <input name='name' value={data.name} onChange={handleChange} type="text" className='input input-primary' placeholder='Name' />
-                  </fieldset>
+      </div>
 
-                  <fieldset className="fieldset">
-                    <legend className="fieldset-legend">Product Category:</legend>
-                    <input name='category' value={data.category} onChange={handleChange} type="text" className='input input-primary' placeholder='Category' />
-                  </fieldset>
+      {loading && <div className="text-center mt-5 text-base-content dark:text-gray-200">Loading...</div>}
+      {error && <div className="text-center mt-5 text-error">{error}</div>}
+      {!loading && !error && filteredProducts.length === 0 && (
+        <div className="text-center mt-5 text-base-content dark:text-gray-200">No products found</div>
+      )}
 
-                  <fieldset className="fieldset">
-                    <legend className="fieldset-legend">Product price:</legend>
-                    <input name='price' value={data.price} onChange={handleChange} type="text" className='input input-primary' placeholder='Price' />
-                  </fieldset>
-
-                    <fieldset className="fieldset">
-                    <legend className="fieldset-legend">Product description:</legend>
-                    <input name='description' value={data.description} onChange={handleChange} type="text" className='input input-primary' placeholder='Description' />
-                  </fieldset>
-                   <button onClick={handleSubmit} className='btn btn-primary w-80 mt-3'>Add</button>
-                 </div>
-                 <div>
-                  <label htmlFor="file" className='border border-primary rounded-xl h-full flex items-center justify-center gap-2'>
-                    <span><CiImageOn  className='text-5xl opacity-40'/></span>
-                    <input value={data.img} onChange={handleChange} type="file" className='hidden' id='file' />
-                  </label>
-                 </div>
-                </div>
-              </div>
-            </div>
+      {!loading && !error && filteredProducts.length > 0 && (
+        <div className="mt-5 rounded-lg bg-base-100 dark:bg-gray-800 border border-base-200 dark:border-gray-700">
+          <div className="overflow-x-auto">
+            <table className="table text-sm">
+              <thead>
+                <tr className="text-base-content dark:text-gray-200">
+                  <th>
+                    <input type="checkbox" className="checkbox checkbox-sm" />
+                  </th>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Seller</th>
+                  <th>Shop</th>
+                  <th>Stock</th>
+                  <th>Price</th>
+                  <th>Tags</th>
+                  <th>Discount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.map((product, index) => {
+                  const price = product.price || {};
+                  return (
+                    <tr key={product._id || index} className="hover:bg-base-200/50 dark:hover:bg-gray-700/50">
+                      <td>
+                        <input type="checkbox" className="checkbox checkbox-sm" />
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="avatar">
+                            <div className="mask mask-squircle h-12 w-12">
+                              <img
+                                src={product.images?.[0] || 'https://via.placeholder.com/50'}
+                                alt={product.name}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-medium">{product.name || 'N/A'}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{product.description?.slice(0, 20) || 'No description'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{product.category || 'N/A'}</td>
+                      <td>{product.seller?.username || 'N/A'}</td>
+                      <td>{product.shop || 'N/A'}</td>
+                      <td>{product.stock ?? 0}</td>
+                      <td>${price.sellingPrice?.toFixed(2) || 'N/A'}</td>
+                      <td>{product.tags?.join(', ') || 'None'}</td>
+                      <td>{product.discount ? `${product.discount}%` : 'None'}</td>
+                      <td>
+                        <button className="btn btn-ghost btn-xs text-sm">Details</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
-
-      <div className='grid grid-cols-4 mt-5 bg-base-100 p-4 rounded-lg flex-1 shadow-lg gap-2'>
-        <fieldset className='fieldset'>
-          <legend className='fieldset-legend'>Category</legend>
-          <details className="dropdown">
-            <summary className="btn w-full border bg-base-100 border-primary rounded-lg">
-              <span className='flex items-center gap-2'>
-                <p className='font-normal'>Category</p>
-                <IoIosArrowDown />
-              </span>
-            </summary>
-            <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-              <li><a>Item 1</a></li>
-              <li><a>Item 2</a></li>
-            </ul>
-          </details>
-        </fieldset>
-
-        <fieldset className='fieldset'>
-          <legend className='fieldset-legend'>Status</legend>
-          <details className="dropdown">
-            <summary className="btn w-full border bg-base-100 border-primary rounded-lg">
-              <span className='flex items-center gap-2'>
-                <p className='font-normal'>Status</p>
-                <IoIosArrowDown />
-              </span>
-            </summary>
-            <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-              <li><a>Item 1</a></li>
-              <li><a>Item 2</a></li>
-            </ul>
-          </details>
-        </fieldset>
-
-        <fieldset className='fieldset'>
-          <legend className='fieldset-legend'>Price</legend>
-          <details className="dropdown">
-            <summary className="btn w-full border bg-base-100 border-primary rounded-lg">
-              <span className='flex items-center gap-2'>
-                <p className='font-normal'>Price</p>
-                <IoIosArrowDown />
-              </span>
-            </summary>
-            <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-              <li><a>Item 1</a></li>
-              <li><a>Item 2</a></li>
-            </ul>
-          </details>
-        </fieldset>
-
-        <fieldset className='fieldset'>
-          <legend className='fieldset-legend'>Store</legend>
-          <details className="dropdown">
-            <summary className="btn w-full border bg-base-100 border-primary rounded-lg">
-              <span className='flex items-center gap-2'>
-                <p className='font-normal'>Store</p>
-                <IoIosArrowDown />
-              </span>
-            </summary>
-            <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-              <li><a>Item 1</a></li>
-              <li><a>Item 2</a></li>
-            </ul>
-          </details>
-        </fieldset>
-      </div>
-
-      <div className='mt-5 rounded-lg bg-base-100 shadow-lg'>
-        <div className="overflow-x-auto">
-          <table className="table">
-            {/* head */}
-            <thead>
-              <tr>
-                <th>
-                  <label>
-                    <input type="checkbox" className="checkbox" />
-                  </label>
-                </th>
-                <th>Name</th>
-                <th>Job</th>
-                <th>Favorite Color</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((products, id) => (
-                <tr key={products.id || id}>
-                  <th>
-                    <label>
-                      <input type="checkbox" className="checkbox" />
-                    </label>
-                  </th>
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <div className="avatar">
-                        <div className="mask mask-squircle h-12 w-12">
-                          <img
-                            src={products.images}
-                            alt="Avatar Tailwind CSS Component" />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-bold">{products.name}</div>
-                        <div className="text-sm opacity-50">{products.price} $</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                   {data.description}
-                  </td>
-                  <td>Purple</td>
-                  <th>
-                    <button className="btn btn-ghost btn-xs">details</button>
-                  </th>
-                </tr>
-              ))}
-
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </ContainerTemplate>
-  )
-}
+  );
+};
 
-export default Products
+export default Products;

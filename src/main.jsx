@@ -31,14 +31,16 @@ import ShopsDetail from './pages/ShopsDetail.jsx';
 import ModalCreateShops from './pages/ModalCreateShops.jsx';
 import Subcategories from './pages/Subcategories.jsx';
 import CreateCupons from './pages/CreateCupons.jsx';
-
+import ProductsDetail from './pages/ProductsDetail.jsx';
+import OrdersInfo from './pages/OrderInfo.jsx';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <ProtectedRoute allowedRoles={['admin', 'seller']}>
-      <App />
-    </ProtectedRoute>,
+    element:
+      <ProtectedRoute allowedRoles={['admin', 'seller']}>
+        <App />
+      </ProtectedRoute>,
     children: [
       { path: '/dashboard', element: <Dashboard /> },
       { path: '/404', element: <NotFound /> },
@@ -58,6 +60,9 @@ const router = createBrowserRouter([
       { path: '/modalcreateshops', element: <ModalCreateShops /> },
       { path: '/subcategories', element: <Subcategories /> },
       { path: '/createcupon', element: <CreateCupons /> },
+      { path: '/productsdetail/:id', element: <ProductsDetail /> },
+      { path: '/ordersinfo/:id', element: <OrdersInfo /> },
+  
     ]
   },
   {

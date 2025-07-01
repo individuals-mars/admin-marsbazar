@@ -19,8 +19,6 @@ const Sidebar = () => {
       icon: <IoHomeOutline />,
       children: [
         { path: "/dashboard", label: "Dashboard" },
-        { path: "/shops", label: "Shops" },
-        { path: "/modalcreateshops", label: "Create Shops" },
         { path: "/orders", label: "Orders" },
       ]
     },
@@ -32,6 +30,14 @@ const Sidebar = () => {
         { path: "/sellers", label: "Sellers" },
         { path: "/admins", label: "Admins" },
         { path: "/customers", label: "Customers" },
+      ]
+    },
+    {
+      label: "Shops",
+      icon: <SiSpringCreators />,
+      children: [
+        { path: "/shops", label: "Shops" },
+        { path: "/modalcreateshops", label: "Create Shops" },
       ]
     },
     {
@@ -48,6 +54,7 @@ const Sidebar = () => {
       children: [
         { path: "/products", label: "All Products" },
         { path: "/CreateProduct", label: "Create Product" },
+        { path: "/enventory", label: "Inventory" },
       ]
     },
     {
@@ -58,7 +65,6 @@ const Sidebar = () => {
         { path: "/createcupon", label: "Create Coupons" },
       ]
     },
-    { path: "/enventory", icon: <SiSpringCreators />, label: "Enventory" },
   ];
   const renderMenuItems = (items) =>
     items.map((item, index) => {
@@ -66,9 +72,9 @@ const Sidebar = () => {
 
       if (item.children) {
         return (
-          <li key={index} className="mb-1 w-full">
+          <li key={index} className="mb-1 w-full h-auto">
             <details open className="w-full">
-              <summary className="flex items-center gap-3 text-sm cursor-pointer px-4 py-2 rounded-xl hover:bg-base-200 transition w-full">
+              <summary className="flex items-center gap-3 text-sm cursor-pointer px-4 py-2 rounded-xl hover:bg-base-200 transition w-full ">
                 {item.icon}
                 <span className="truncate">{item.label}</span>
               </summary>
@@ -99,7 +105,7 @@ const Sidebar = () => {
       return (
         <li
           key={index}
-          className={`relative w-full ${isActive ? "bg-base-300 text-primary font-bold" : ""}`}
+          className={`relative w-full ${isActive ? "bg-base-300 text-primary font-bold overflow-y-auto" : ""}`}
         >
           <Link
             className="text-sm flex gap-3 items-center py-2 px-4 hover:bg-base-200 rounded-xl forgiveness w-full truncate"

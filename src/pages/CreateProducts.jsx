@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { FaCloudArrowUp, FaPlus, FaTrash } from 'react-icons/fa6';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { use } from 'react';
+import { useEffect } from 'react';
 
 const CreateProducts = () => {
   const navigate = useNavigate();
@@ -20,8 +22,12 @@ const CreateProducts = () => {
     discount: '',
     images: [''],
   });
+
   const [loading, setLoading] = useState(false);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [sellers, setSellers] = useState([]);
+  const [shops, setShops] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,9 +68,10 @@ const CreateProducts = () => {
     const files = Array.from(e.target.files);
     const newImages = files.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...newImages]);
+
     setFormData((prev) => ({
       ...prev,
-      images: [...prev.images.filter(Boolean), ...files.map((file) => file.name)],
+      images: [...prev.images.filter(Boolean), ...files], // ✅ сохраняем реальные файлы
     }));
   };
 
@@ -95,42 +102,94 @@ const CreateProducts = () => {
     }
 
     try {
-      const payload = {
-        name: formData.name,
-        category: formData.category,
-        seller: formData.seller,
-        shop: formData.shop,
-        stock: parseInt(formData.stock),
-        description: formData.description || undefined,
-        price: JSON.stringify({
-          costPrice: parseFloat(formData.price.costPrice),
-          sellingPrice: parseFloat(formData.price.sellingPrice),
-        }),
-        tags: formData.tags.filter(Boolean),
-        discount: formData.discount ? parseFloat(formData.discount) : undefined,
-        images: formData.images.filter(Boolean),
-      };
-
-      const response = await axios.post('http://localhost:3000/products', payload, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('seller', formData.seller);
+      formDataToSend.append('shop', formData.shop);
+      formDataToSend.append('stock', parseInt(formData.stock));
+      if (formData.description) formDataToSend.append('description', formData.description);
+      formDataToSend.append('price', JSON.stringify({
+        costPrice: parseFloat(formData.price.costPrice),
+        sellingPrice: parseFloat(formData.price.sellingPrice),
+      }));
+      formData.tags.filter(Boolean).forEach((tag, index) => {
+        formDataToSend.append(`tags[${index}]`, tag);
+      });
+      if (formData.discount) formDataToSend.append('discount', parseFloat(formData.discount));
+      formData.images.filter(Boolean).forEach((file) => {
+        if (file instanceof File) {
+          formDataToSend.append('images', file);
+        }
       });
 
-      console.log('Product created:', response.data);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/products`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // 'Content-Type' is automatically set to multipart/form-data with FormData
+        },
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || 'Failed to create product');
+      }
+
+      const result = await response.json();
+      console.log('Product created:', result);
       toast.success('Product created successfully!');
       navigate('/products');
     } catch (err) {
-      console.error('Error creating product:', err);
-      toast.error(err.response?.data?.message || 'Failed to create product');
+      console.error('Error creating product:', err.message);
+      toast.error(err.message || 'Failed to create product');
     } finally {
       setLoading(false);
     }
   };
 
+
+  const getCategories = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/categories`);
+      setCategories(response.data);
+    } catch (e) {
+      setError(e.response?.data?.message || 'Error fetching categories');
+      toast.error(e.response?.data?.message || 'Error fetching categories');
+    }
+  };
+
+
+  const getSellers = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/users`);
+      setSellers(response.data);
+    } catch (e) {
+      setError(e.response?.data?.message || 'Error fetching sellers');
+      toast.error(e.response?.data?.message || 'Error fetching sellers');
+    }
+  };
+
+  const getShops = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/shops`);
+      console.log('Shops response:', response.data); // 👈 проверь, что это
+      setShops(response.data.data); 
+    } catch (error) {
+      setError(error.response?.data?.message || 'Error fetching shops');
+      toast.error(error.response?.data?.message || 'Error fetching shops');
+    }
+  }
+
+  useEffect(() => {
+    getCategories();
+    getSellers();
+    getShops();
+  }, []);
+
   return (
-    <div className="p-6 bg-base-100 dark:bg-gray-900 min-h-screen">
+    <div className="p-6 bg-base-200 dark:bg-gray-900 min-h-screen">
       <h1 className="text-xl font-semibold text-base-content dark:text-gray-100 my-3">Create Products</h1>
       <hr className="my-6 border-base-200 dark:border-gray-700" />
       <form onSubmit={handleSubmit} className="space-y-8">
@@ -157,7 +216,7 @@ const CreateProducts = () => {
                 className="hidden"
               />
             </label>
-            {imagePreviews.length > 0 && (
+            {imagePreviews.length > 3 && (
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {imagePreviews.map((preview, index) => (
                   <div key={index} className="relative">
@@ -199,40 +258,59 @@ const CreateProducts = () => {
             </div>
             <div>
               <label className="block  font-medium text-base-content dark:text-gray-200 mb-1">Category</label>
-              <input
-                type="text"
+              <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                placeholder="Category"
-                className="input input-bordered w-full text-sm rounded-lg border-base-200 dark:border-gray-600 hover:bg-base-200/50 dark:hover:bg-gray-700/50 transition"
-                required
-              />
+                className="select w-full"
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.title}
+                  </option>
+                ))}
+              </select>
+
             </div>
             <div>
-              <label className="block  font-medium text-base-content dark:text-gray-200 mb-1">Seller</label>
-              <input
-                type="text"
+              <label className="block font-medium text-base-content dark:text-gray-200 mb-1">
+                Seller
+              </label>
+              <select
                 name="seller"
                 value={formData.seller}
                 onChange={handleChange}
-                placeholder="Seller ID"
-                className="input input-bordered w-full text-sm rounded-lg border-base-200 dark:border-gray-600 hover:bg-base-200/50 dark:hover:bg-gray-700/50 transition"
+                className="select w-full select-bordered border-base-200 dark:border-gray-600"
                 required
-              />
+              >
+                <option value="">Select a seller</option>
+                {sellers.map((seller) => (
+                  <option key={seller._id} value={seller._id}>
+                    {seller.username || 'Unnamed'}
+                  </option>
+                ))}
+              </select>
             </div>
+
             <div>
-              <label className="block font-medium text-base-content dark:text-gray-200 mb-1">Shop ID</label>
-              <input
-                type="text"
+              <label className="block font-medium text-base-content dark:text-gray-200 mb-1">Shop</label>
+              <select
                 name="shop"
                 value={formData.shop}
                 onChange={handleChange}
-                placeholder="Shop ID"
-                className="input input-bordered w-full text-sm rounded-lg border-base-200 dark:border-gray-600 hover:bg-base-200/50 dark:hover:bg-gray-700/50 transition"
+                className="select w-full select-bordered border-base-200 dark:border-gray-600"
                 required
-              />
+              >
+                <option value="">Select a shop</option>
+                {shops.map((shop) => (
+                  <option key={shop._id} value={shop._id}>
+                    {shop.shopname || shop.title || 'Unnamed Shop'}
+                  </option>
+                ))}
+              </select>
             </div>
+
             <div>
               <label className="block  font-medium text-base-content dark:text-gray-200 mb-1">Stock</label>
               <input
@@ -270,7 +348,7 @@ const CreateProducts = () => {
             <div>
               <label className="block font-medium text-base-content dark:text-gray-200 mb-1">Cost Price</label>
               <input
-                type="number"
+                type=""
                 name="price.costPrice"
                 value={formData.price.costPrice}
                 onChange={handleChange}
@@ -356,8 +434,8 @@ const CreateProducts = () => {
           <div className=''>
             <button
               className='btn btn-outline btn-error flex items-center gap-2 rounded-lg'
-              onClick={() => navigate(-1)} 
-              >
+              onClick={() => navigate(-1)}
+            >
               Back
             </button>
           </div>

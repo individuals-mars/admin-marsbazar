@@ -101,7 +101,7 @@ const Orders = () => {
   const SelectOrderDetail = (data) => {
     console.log("SARDORGEY:", data)
     dispatch(setOrders(data))
-    navigate(`/order/${data._id}`)
+    navigate(`/ordersinfo/${data._id}`)
   }
 
   return (

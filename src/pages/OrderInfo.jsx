@@ -60,7 +60,7 @@ const OrderInfo = () => {
 
   const OrderInfoSection = [
     {
-      title: `${ordersInfo.customer.username}`,
+      title: `${ordersInfo.customer?.username}`,
       content: [
         `${ordersInfo.products?.status || 1} Item`,
         "Express Delivery",

@@ -8,9 +8,29 @@ import {
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler // Added Filler plugin
+} from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+// Register all necessary ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler // Registered Filler plugin
+);
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -25,11 +45,6 @@ const ProductDetail = () => {
     name: '',
     stock: 0,
     price: { costPrice: 0, sellingPrice: 0 },
-    category: '',
-    seller: '',
-    shop: '',
-    description: '',
-    tags: []
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -98,7 +113,6 @@ const ProductDetail = () => {
     if (editForm.stock < 0) errors.stock = 'Stock cannot be negative';
     if (editForm.price.sellingPrice <= 0) errors.sellingPrice = 'Selling price must be positive';
     if (editForm.price.costPrice < 0) errors.costPrice = 'Cost price cannot be negative';
-    if (!editForm.category.trim()) errors.category = 'Category is required';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -137,7 +151,7 @@ const ProductDetail = () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/products/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to delete');
       const data = await res.json();
@@ -201,12 +215,65 @@ const ProductDetail = () => {
 
       {/* Skeleton Loader */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow animate-pulse">
-              <div className="h-4 bg-base-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
-              <div className="h-6 bg-base-200 dark:bg-gray-700 rounded w-3/4"></div>
-            </div> 
+        <div className="gap-4 mb-6">
+          {[...Array(1)].map((_, i) => (
+            <div key={i}  className="flex flex-col lg:flex-row gap-6">
+              {/* Left Column */}
+              <div className="lg:w-1/3 space-y-6">
+                {/* Low Stock Placeholder */}
+                <div className="h-12 bg-red-700/40 dark:bg-red-900/40 rounded-lg animate-pulse" />
+
+                {/* Images Section */}
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow space-y-4 animate-pulse">
+                  <div className="h-6 bg-base-200 dark:bg-gray-700 w-1/3 rounded"></div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="aspect-square bg-base-200 dark:bg-gray-700 rounded-lg" />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow animate-pulse space-y-2">
+                  <div className="h-6 bg-base-200 dark:bg-gray-700 w-1/3 rounded"></div>
+                  <p className="h-4 bg-base-200 dark:bg-gray-700 w-full rounded"></p>
+                  <p className="h-4 bg-base-200 dark:bg-gray-700 w-5/6 rounded"></p>
+                  <p className="h-4 bg-base-200 dark:bg-gray-700 w-3/4 rounded"></p>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="lg:w-2/3 space-y-6">
+                {/* Info Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow animate-pulse space-y-3">
+                      <div className="h-4 bg-base-200 dark:bg-gray-700 w-1/3 rounded"></div>
+                      <div className="h-6 bg-base-200 dark:bg-gray-700 w-1/2 rounded"></div>
+                      <div className="h-4 bg-base-200 dark:bg-gray-700 w-2/3 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Stock Analytics */}
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow animate-pulse">
+                  <div className="h-6 bg-base-200 dark:bg-gray-700 w-1/4 mb-4 rounded"></div>
+                  <div className="h-64 bg-base-200 dark:bg-gray-700 rounded"></div>
+                </div>
+
+                {/* Additional Info Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow animate-pulse space-y-3">
+                      <div className="h-4 bg-base-200 dark:bg-gray-700 w-1/2 rounded"></div>
+                      <div className="h-4 bg-base-200 dark:bg-gray-700 w-full rounded"></div>
+                      <div className="h-4 bg-base-200 dark:bg-gray-700 w-5/6 rounded"></div>
+                      <div className="h-4 bg-base-200 dark:bg-gray-700 w-2/3 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       ) : (
@@ -263,7 +330,7 @@ const ProductDetail = () => {
 
             {/* Description Section */}
             {product.description && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1 }}
@@ -320,11 +387,10 @@ const ProductDetail = () => {
                   </div>
                   <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
                     <span className="text-gray-600 dark:text-gray-400">Profit:</span>
-                    <span className={`font-medium ${
-                      product.price?.income >= 0 
-                        ? 'text-green-600 dark:text-green-400' 
+                    <span className={`font-medium ${product.price?.income >= 0
+                        ? 'text-green-600 dark:text-green-400'
                         : 'text-red-600 dark:text-red-400'
-                    }`}>
+                      }`}>
                       ${product.price?.income?.toFixed(2) || '0.00'}
                     </span>
                   </div>
@@ -389,7 +455,7 @@ const ProductDetail = () => {
                       maintainAspectRatio: false,
                       plugins: {
                         legend: { position: 'top' },
-                        tooltip: { 
+                        tooltip: {
                           backgroundColor: '#1F2937',
                           titleColor: '#F9FAFB',
                           bodyColor: '#F9FAFB',
@@ -397,8 +463,8 @@ const ProductDetail = () => {
                           borderWidth: 1
                         }
                       },
-                      scales: { 
-                        y: { 
+                      scales: {
+                        y: {
                           beginAtZero: true,
                           grid: { color: 'rgba(156, 163, 175, 0.1)' },
                           ticks: { color: 'rgba(156, 163, 175, 0.8)' }
@@ -505,15 +571,15 @@ const ProductDetail = () => {
               className="relative max-w-full max-h-full"
               onClick={(e) => e.stopPropagation()}
             >
-              <img 
-                src={product.images[zoomedImageIndex]} 
+              <img
+                src={product.images[zoomedImageIndex]}
                 alt={`Zoomed ${zoomedImageIndex + 1}`}
                 className="max-w-[90vw] max-h-[90vh] object-contain"
               />
-              
+
               {product.images.length > 1 && (
                 <>
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleImageNavigation(-1);
@@ -523,7 +589,7 @@ const ProductDetail = () => {
                   >
                     <FiChevronLeft size={24} />
                   </button>
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleImageNavigation(1);
@@ -535,14 +601,14 @@ const ProductDetail = () => {
                   </button>
                 </>
               )}
-              
-              <button 
+
+              <button
                 onClick={() => setZoomedImageIndex(null)}
                 className="absolute top-4 right-4 p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70"
               >
                 <FiX size={24} />
               </button>
-              
+
               {product.images.length > 1 && (
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
                   {product.images.map((_, i) => (
@@ -569,7 +635,7 @@ const ProductDetail = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40"
+            className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-40"
           >
             <motion.div
               initial={{ scale: 0.9 }}
@@ -603,7 +669,7 @@ const ProductDetail = () => {
                   />
                   {formErrors.name && <p className="text-error text-xs mt-1">{formErrors.name}</p>}
                 </div>
-                
+
                 <div>
                   <label className="label">
                     <span className="label-text">Stock</span>
@@ -617,7 +683,7 @@ const ProductDetail = () => {
                   />
                   {formErrors.stock && <p className="text-error text-xs mt-1">{formErrors.stock}</p>}
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="label">
@@ -635,7 +701,7 @@ const ProductDetail = () => {
                     />
                     {formErrors.sellingPrice && <p className="text-error text-xs mt-1">{formErrors.sellingPrice}</p>}
                   </div>
-                  
+
                   <div>
                     <label className="label">
                       <span className="label-text">Cost Price</span>
@@ -653,53 +719,13 @@ const ProductDetail = () => {
                     {formErrors.costPrice && <p className="text-error text-xs mt-1">{formErrors.costPrice}</p>}
                   </div>
                 </div>
-                
-                <div>
-                  <label className="label">
-                    <span className="label-text">Category</span>
-                  </label>
-                  <input
-                    type="text"
-                    className={`input input-bordered w-full ${formErrors.category ? 'input-error' : ''}`}
-                    placeholder="Category"
-                    value={editForm.category}
-                    onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                  />
-                  {formErrors.category && <p className="text-error text-xs mt-1">{formErrors.category}</p>}
-                </div>
-                
-                <div>
-                  <label className="label">
-                    <span className="label-text">Description</span>
-                  </label>
-                  <textarea
-                    className="textarea textarea-bordered w-full"
-                    placeholder="Description"
-                    value={editForm.description}
-                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-                
-                <div>
-                  <label className="label">
-                    <span className="label-text">Tags (comma separated)</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="input input-bordered w-full"
-                    placeholder="Tags"
-                    value={editForm.tags.join(', ')}
-                    onChange={(e) => setEditForm({ ...editForm, tags: e.target.value.split(',').map(tag => tag.trim()) })}
-                  />
-                </div>
               </div>
-              
-              <div className="mt-6 flex justify-end gap-2">
+
+              <div className="mt-10 flex justify-end gap-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="btn btn-ghost"
+                  className="btn btn-outline btn-error"
                   onClick={() => setEditModalOpen(false)}
                 >
                   Cancel
@@ -707,7 +733,7 @@ const ProductDetail = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="btn btn-primary"
+                  className="btn btn-outline btn-primary"
                   onClick={handleUpdate}
                 >
                   Save Changes
@@ -725,7 +751,7 @@ const ProductDetail = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40"
+            className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-40"
           >
             <motion.div
               initial={{ scale: 0.9 }}
@@ -742,7 +768,7 @@ const ProductDetail = () => {
                   Are you sure you want to delete "{product.name}"? This action cannot be undone.
                 </p>
               </div>
-              
+
               <div className="mt-6 flex justify-center gap-4">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -766,6 +792,8 @@ const ProductDetail = () => {
         )}
       </AnimatePresence>
     </motion.div>
+
+    
   );
 };
 

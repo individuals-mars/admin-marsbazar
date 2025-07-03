@@ -53,7 +53,7 @@ const Sidebar = () => {
       icon: <RiShoppingBasket2Fill />,
       children: [
         { path: "/products", label: "All Products" },
-        { path: "/CreateProduct", label: "Create Product" },
+        // { path: "/CreateProduct", label: "Create Product" },
         { path: "/enventory", label: "Inventory" },
       ]
     },

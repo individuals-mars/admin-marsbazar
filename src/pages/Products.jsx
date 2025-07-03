@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ContainerTemplate from '../components/ContainerTemplate';
 import TitleTemplate from '../components/TitleTemplate';
 import { IoIosArrowDown } from 'react-icons/io';
@@ -14,7 +14,6 @@ import { FiTag, FiX } from 'react-icons/fi';
 const Products = () => {
   const { token } = useSelector((state) => state?.user);
   const navigate = useNavigate();
-
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,53 +23,31 @@ const Products = () => {
   const [sortBy, setSortBy] = useState('default');
   const [productIdToDelete, setProductIdToDelete] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
-  const defaultImage = 'https://au.ooni.com/cdn/shop/articles/burger_resized_80d2f8e0-e7a8-4eb4-8614-eba52e70f57b.jpg?v=1662487592&width=1080';
-  const [editForm, setEditForm] = useState({
-    title: '',
-    category: '',
-    seller: '',
-    shop: '',
-    stock: 0,
-    description: '',
-    price: { costPrice: 0, sellingPrice: 0 },
-    tags: [''],
-    discount: '',
-    icon: [],
-  });
+  const defaultImage = 'https://media.istockphoto.com/id/1309352410/ru/%D1%84%D0%BE%D1%82%D0%BE/%D1%87%D0%B8%D0%B7%D0%B1%D1%83%D1%80%D0%B3%D0%B5%D1%80-%D1%81-%D0%BF%D0%BE%D0%BC%D0%B8%D0%B4%D0%BE%D1%80%D0%B0%D0%BC%D0%B8-%D0%B8-%D1%81%D0%B0%D0%BB%D0%B0%D1%82%D0%BE%D0%BC-%D0%BD%D0%B0-%D0%B4%D0%B5%D1%80%D0%B5%D0%B2%D1%8F%D0%BD%D0%BD%D0%BE%D0%B9-%D0%B4%D0%BE%D1%81%D0%BA%D0%B5.jpg?s=612x612&w=0&k=20&c=dW1Aguo-4PEcRs79PUbmMXpx5YrBjqSYiEhwnddbj_g=';
 
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/products`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/products`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Ошибка ${res.status}: ${text}`);
-      }
-
-      const data = await res.json();
-      console.log('📦 Response data:', data);
-
-      const items = Array.isArray(data)
-        ? data
-        : data.products || data.data || []; // поддержка разных API
+      const data = response.data;
+      const items = data.data || data.products || data || [];
 
       if (!Array.isArray(items)) {
-        throw new Error('❌ Неверный формат данных: ожидался массив продуктов');
+        throw new Error('Invalid data format: expected array of products');
       }
 
       const mappedProducts = items.map((item) => ({
         _id: item._id,
-        title: item.title,
-        name: item.title,
-        icon: item.icon || [],
-        images: item.icon || [],
-        category: item.category || '',
-        seller: item.seller || '',
-        shop: item.shop || '',
+        name: item.name || item.title || '',
+        images: item.images || item.icon || [],
+        category: item.category?.title || item.category || '',
+        seller: item.seller?.username || item.seller || '',
+        shop: item.shop?.shopname || item.shop || '',
         stock: item.stock || 0,
         description: item.description || '',
         price: item.price
@@ -79,8 +56,7 @@ const Products = () => {
             : item.price
           : { costPrice: 0, sellingPrice: 0 },
         tags: item.tags || [],
-        discount: item.discount || 0,
-        status: item.status,
+        status: item.stock > 0 ? 'active' : 'out-of-stock',
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       }));
@@ -88,84 +64,52 @@ const Products = () => {
       setProducts(mappedProducts);
       setFilteredProducts(mappedProducts);
     } catch (err) {
-      console.error('❌ fetchProducts error:', err);
-      const message = err.message || 'Ошибка загрузки продуктов';
-      setError(message);
-      toast.error(message);
+      const msg = err.message || 'Failed to load products';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
 
-
   const deleteProduct = async () => {
-    if (!token) {
-      toast.error('Please log in to delete products');
-      navigate('/login');
-      return;
-    }
-
     if (!productIdToDelete) return;
 
     setLoading(true);
     try {
-      const res = await fetch(
+      await axios.delete(
         `${import.meta.env.VITE_BACKEND_URL}/api/products/${productIdToDelete}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Ошибка ${res.status}: ${errorText}`);
-      }
-
-      setProducts((prev) => prev.filter((item) => item._id !== productIdToDelete));
-      setFilteredProducts((prev) => prev.filter((item) => item._id !== productIdToDelete));
-
-      toast.success('Product deleted successfully!');
-    } catch (error) {
-      const message = error.message || 'Error deleting product';
-      setError(message);
-      toast.error(message);
-    } finally {
+      setProducts(prev => prev.filter(p => p._id !== productIdToDelete));
+      setFilteredProducts(prev => prev.filter(p => p._id !== productIdToDelete));
       setProductIdToDelete(null);
+      toast.success('Product deleted successfully!');
       document.getElementById('delete_modal').close();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete product');
+    } finally {
       setLoading(false);
     }
   };
 
-
   const editProduct = async (id, updatedData) => {
     try {
-      const payload = {
-        name: updatedData.title,
-        stock: Number(updatedData.stock),
-        price: {
-          costPrice: Number(updatedData.price.costPrice),
-          sellingPrice: Number(updatedData.price.sellingPrice),
-        },
-      };
       const response = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/products/${id}`,
-        payload,
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+        updatedData,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      const updatedProduct = {
-        ...response.data,
-        name: response.data.title,
-        price: response.data.price ? JSON.parse(response.data.price) : { costPrice: 0, sellingPrice: 0 },
-      };
-      setProducts(products.map((p) => (p._id === id ? updatedProduct : p)));
-      setFilteredProducts(filteredProducts.map((p) => (p._id === id ? updatedProduct : p)));
+
+      setProducts(products.map(p => p._id === id ? response.data : p));
+      setFilteredProducts(filteredProducts.map(p => p._id === id ? response.data : p));
+      setEditingProduct(null);
       toast.success('Product updated successfully!');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update product');
+      document.getElementById('edit_modal').close();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update product');
     }
   };
 
@@ -180,24 +124,27 @@ const Products = () => {
   useEffect(() => {
     let result = [...products];
 
+    // Filter by search query
     if (searchQuery) {
-      result = result.filter((product) =>
-        product.title.toLowerCase().includes(searchQuery.toLowerCase())
+      result = result.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
+    // Filter by stock status
     if (showFilter === 'active') {
-      result = result.filter((product) => product.stock > 0);
+      result = result.filter(product => product.stock > 0);
     } else if (showFilter === 'out-of-stock') {
-      result = result.filter((product) => product.stock === 0);
+      result = result.filter(product => product.stock === 0);
     }
 
+    // Sort products
     if (sortBy === 'price-low-high') {
       result.sort((a, b) => (a.price?.sellingPrice || 0) - (b.price?.sellingPrice || 0));
     } else if (sortBy === 'price-high-low') {
       result.sort((a, b) => (b.price?.sellingPrice || 0) - (a.price?.sellingPrice || 0));
     } else if (sortBy === 'name-az') {
-      result.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+      result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
 
     setFilteredProducts(result);
@@ -206,8 +153,7 @@ const Products = () => {
   const handleSearch = (e) => setSearchQuery(e.target.value);
 
   const handleProductsClick = (id) => {
-    if (id) navigate(`/productsdetail/${id}`); // Match ProductDetail route
-    else toast.error('Product ID is missing');
+    if (id) navigate(`/productsdetail/${id}`);
   };
 
   return (
@@ -265,6 +211,11 @@ const Products = () => {
             <CiFilter className="text-xl" />
             Filter
           </button>
+          <button className='flex'> 
+            <Link to="/createproduct" className="btn btn-primary rounded-lg flex">
+              Add Product
+            </Link>
+          </button>
         </div>
       </div>
 
@@ -293,7 +244,7 @@ const Products = () => {
                   <th>Stock</th>
                   <th>Price</th>
                   <th>Tags</th>
-                  <th>Discount</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -311,26 +262,28 @@ const Products = () => {
                           <div className="mask mask-squircle h-12 w-12">
                             <img
                               src={product.images?.[0] || defaultImage}
-                              alt={product.title}
+                              alt={product.name}
                             />
                           </div>
                         </div>
                         <div>
-                          <div className="font-medium">{product.title || 'N/A'}</div>
+                          <div className="font-medium">{product.name}</div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
                             {product.description?.slice(0, 20) || 'No description'}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td>{typeof product.category === 'string' ? product.category : product.category?.title || 'N/A'}</td>
-                    <td>{typeof product.seller === 'string' ? product.seller : product.seller?.username || 'N/A'}</td>
-                    <td>{typeof product.shop === 'string' ? product.shop : product.shop?.title || 'N/A'}</td>
-                    <td>{product.stock ?? 0}</td>
-                    <td>${product.price?.sellingPrice?.toFixed(2) || 'N/A'}</td>
+                    <td>{product.category}</td>
+                    <td>{product.seller}</td>
+                    <td>{product.shop}</td>
+                    <td>{product.stock}</td>
+                    <td>${product.price?.sellingPrice?.toFixed(2) || '0.00'}</td>
                     <td>{product.tags?.join(', ') || 'None'}</td>
-                    <td>{product.discount ? `${product.discount}%` : 'None'}</td>
-                    <td className="flex gap-2 mt-3">
+                    <td className={`${product.status === 'active' ? 'text-success' : 'text-error'}`}>
+                      {product.status}
+                    </td>
+                    <td className="flex mt-3">
                       <button
                         className="btn btn-ghost btn-sm text-error"
                         onClick={(e) => {
@@ -338,8 +291,6 @@ const Products = () => {
                           setProductIdToDelete(product._id);
                           document.getElementById('delete_modal').showModal();
                         }}
-
-                        aria-label="Delete product"
                       >
                         <MdDelete className="text-xl" />
                       </button>
@@ -348,18 +299,8 @@ const Products = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingProduct(product);
-                          setEditForm({
-                            title: product.title || '',
-                            stock: product.stock || 0,
-                            price: {
-                              costPrice: product.price?.costPrice || 0,
-                              sellingPrice: product.price?.sellingPrice || 0,
-                            },
-
-                          });
                           document.getElementById('edit_modal').showModal();
                         }}
-                        aria-label="Edit product"
                       >
                         <CiEdit className="text-xl" />
                       </button>
@@ -372,14 +313,21 @@ const Products = () => {
         </div>
       )}
 
+      {/* Edit Modal */}
       <dialog id="edit_modal" className="modal">
         <div className="modal-box bg-base-100 dark:bg-gray-800 max-w-lg p-6 rounded-lg border border-base-200 dark:border-gray-700">
           {editingProduct && (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                editProduct(editingProduct._id, editForm);
-                document.getElementById('edit_modal').close();
+                editProduct(editingProduct._id, {
+                  name: editingProduct.name,
+                  stock: Number(editingProduct.stock),
+                  price: {
+                    costPrice: Number(editingProduct.price.costPrice),
+                    sellingPrice: Number(editingProduct.price.sellingPrice),
+                  },
+                });
               }}
               className="flex flex-col gap-4"
             >
@@ -390,7 +338,6 @@ const Products = () => {
                   type="button"
                   className="ml-auto btn btn-ghost btn-sm"
                   onClick={() => document.getElementById('edit_modal').close()}
-                  aria-label="Close modal"
                 >
                   <FiX className="text-xl" />
                 </button>
@@ -402,8 +349,8 @@ const Products = () => {
                   type="text"
                   className="input input-bordered w-full text-sm border-base-200 dark:border-gray-600"
                   placeholder="Name"
-                  value={editForm.title}
-                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  value={editingProduct.name}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
                   required
                 />
               </div>
@@ -414,8 +361,8 @@ const Products = () => {
                   type="number"
                   className="input input-bordered w-full text-sm border-base-200 dark:border-gray-600"
                   placeholder="Stock"
-                  value={editForm.stock}
-                  onChange={(e) => setEditForm({ ...editForm, stock: Number(e.target.value) })}
+                  value={editingProduct.stock}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, stock: Number(e.target.value) })}
                   min="0"
                   required
                 />
@@ -427,13 +374,11 @@ const Products = () => {
                   step="0.01"
                   className="input input-bordered w-full text-sm border-base-200 dark:border-gray-600"
                   placeholder="Cost Price"
-                  value={editForm.price.costPrice}
-                  onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      price: { ...editForm.price, costPrice: Number(e.target.value) },
-                    })
-                  }
+                  value={editingProduct.price.costPrice}
+                  onChange={(e) => setEditingProduct({
+                    ...editingProduct,
+                    price: { ...editingProduct.price, costPrice: Number(e.target.value) }
+                  })}
                   min="0"
                 />
               </div>
@@ -444,13 +389,11 @@ const Products = () => {
                   step="0.01"
                   className="input input-bordered w-full text-sm border-base-200 dark:border-gray-600"
                   placeholder="Selling Price"
-                  value={editForm.price.sellingPrice}
-                  onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      price: { ...editForm.price, sellingPrice: Number(e.target.value) },
-                    })
-                  }
+                  value={editingProduct.price.sellingPrice}
+                  onChange={(e) => setEditingProduct({
+                    ...editingProduct,
+                    price: { ...editingProduct.price, sellingPrice: Number(e.target.value) }
+                  })}
                   min="0"
                   required
                 />
@@ -475,6 +418,8 @@ const Products = () => {
           )}
         </div>
       </dialog>
+
+      {/* Delete Modal */}
       <dialog id="delete_modal" className="modal">
         <div className="modal-box bg-base-100 dark:bg-gray-800 max-w-md p-6 rounded-lg border border-base-200 dark:border-gray-700">
           <h3 className="font-bold text-lg text-error">Delete Product</h3>
@@ -487,8 +432,9 @@ const Products = () => {
                 type="button"
                 className="btn btn-error btn-sm"
                 onClick={deleteProduct}
-              > 
-                Yes, Delete
+                disabled={loading}
+              >
+                {loading ? 'Deleting...' : 'Yes, Delete'}
               </button>
               <button
                 type="button"
@@ -504,8 +450,6 @@ const Products = () => {
           </div>
         </div>
       </dialog>
-
-
     </ContainerTemplate>
   );
 };

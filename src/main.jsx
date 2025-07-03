@@ -55,7 +55,7 @@ const router = createBrowserRouter([
       { path: '/shops', element: <Shops /> },
       { path: '/shopdetail/:id', element: <ShopsDetail /> },
       { path: '/CreateProduct', element: <CreateProducts /> },
-      { path: '/Enventory', element: <Enventory /> },
+      // { path: '/Enventory', element: <Enventory /> },
       { path: '/envelope', element: <Envelope /> },
       { path: '/modalcreateshops', element: <ModalCreateShops /> },
       { path: '/subcategories', element: <Subcategories /> },

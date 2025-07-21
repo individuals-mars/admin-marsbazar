@@ -3,46 +3,48 @@ import { createRoot } from 'react-dom/client'
 import {
   createBrowserRouter,
   RouterProvider,
-} from "react-router-dom";
+} from 'react-router-dom'
 import './index.css'
+import { store, persistor } from './store'
+import { Provider } from 'react-redux'
+import { PersistGate } from 'redux-persist/integration/react'
+import ProtectedRoute from './guard/ProtectedRoute.jsx'
+import { ToastContainer } from 'react-toastify'
+
+// ⛔ no Suspense/lazy — обычные импорты
 import App from './App.jsx'
-import Login from './pages/Login.jsx';
-import NotFound from './pages/NotFound.jsx';
-import Orders from './pages/Orders.jsx';
-import Products from './pages/Products.jsx';
-import Profile from './pages/Profile.jsx';
-import Register from './pages/Register.jsx';
-import Dashboard from './pages/Dashboard.jsx';
-import Categories from './pages/Categories.jsx';
-import { store, persistor } from './store/index.js';
-import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
-import ProtectedRoute from './guard/ProtectedRoute.jsx';
-import Allusers from './pages/Allusers.jsx';
-import Sellers from './pages/Sellers.jsx';
-import Admins from './pages/Admins.jsx';
-import Customers from './pages/Customers.jsx';
-import Shops from './pages/Shops.jsx';
-import Envelope from './pages/Envelope.jsx';
-import { ToastContainer, toast } from 'react-toastify';
-import CreateProducts from './pages/CreateProducts.jsx';
-import Enventory from './pages/Enventory.jsx';
-import ShopsDetail from './pages/ShopsDetail.jsx';
-import ModalCreateShops from './pages/ModalCreateShops.jsx';
-import Subcategories from './pages/Subcategories.jsx';
-import CreateCupons from './pages/CreateCupons.jsx';
-import ProductsDetail from './pages/ProductsDetail.jsx';
-import OrdersInfo from './pages/OrderInfo.jsx';
+import NotFound from './pages/NotFound.jsx'
+import Orders from './pages/Orders.jsx'
+import Products from './pages/Products.jsx'
+import Profile from './pages/Profile.jsx'
+import Register from './pages/Register.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import Categories from './pages/Categories.jsx'
+import Allusers from './pages/Allusers.jsx'
+import Sellers from './pages/Sellers.jsx'
+import Admins from './pages/Admins.jsx'
+import Customers from './pages/Customers.jsx'
+import Shops from './pages/Shops.jsx'
+import ShopsDetail from './pages/ShopsDetail.jsx'
+import Envelope from './pages/Envelope.jsx'
+import Subcategories from './pages/Subcategories.jsx'
+import CreateCupons from './pages/CreateCupons.jsx'
+import ProductsDetail from './pages/ProductsDetail.jsx'
+import OrdersInfo from './pages/OrderInfo.jsx'
+import Login from './pages/Login.jsx'
+import Enventory from './pages/Enventory.jsx'
+import Analytics from './pages/Analytics.jsx'
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element:
+    path: '/',
+    element: (
       <ProtectedRoute allowedRoles={['admin', 'seller']}>
         <App />
-      </ProtectedRoute>,
+      </ProtectedRoute>
+    ),
     children: [
-      { path: '/dashboard', element: <Dashboard /> },
+      { path: 'dashboard', element: <Dashboard /> },
       { path: '/404', element: <NotFound /> },
       { path: '/categories', element: <Categories /> },
       { path: '/orders', element: <Orders /> },
@@ -54,28 +56,24 @@ const router = createBrowserRouter([
       { path: '/customers', element: <Customers /> },
       { path: '/shops', element: <Shops /> },
       { path: '/shopdetail/:id', element: <ShopsDetail /> },
-      { path: '/CreateProduct', element: <CreateProducts /> },
-      // { path: '/Enventory', element: <Enventory /> },
       { path: '/envelope', element: <Envelope /> },
-      { path: '/modalcreateshops', element: <ModalCreateShops /> },
       { path: '/subcategories', element: <Subcategories /> },
       { path: '/createcupon', element: <CreateCupons /> },
       { path: '/productsdetail/:id', element: <ProductsDetail /> },
       { path: '/ordersinfo/:id', element: <OrdersInfo /> },
-  
-    ]
+      { path: '/enventory', element: <Enventory /> },
+      { path: '/analytics', element: <Analytics />}
+    ],
   },
   {
-    path: "/login",
-    element: <Login />
+    path: '/login',
+    element: <Login />,
   },
   {
-    path: "/register",
-    element: <Register />
+    path: '/register',
+    element: <Register />,
   },
-
-
-]);
+])
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -85,5 +83,5 @@ createRoot(document.getElementById('root')).render(
         <ToastContainer />
       </PersistGate>
     </Provider>
-  </StrictMode>,
+  </StrictMode>
 )

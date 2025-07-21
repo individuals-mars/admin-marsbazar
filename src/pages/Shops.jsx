@@ -71,6 +71,7 @@ const Shops = () => {
 
     return (
         <div className="p-6">
+            
             <div className="flex justify-between mb-3">
                 <h1 className="font-semibold text-2xl mb-4">Shops</h1>
             </div>

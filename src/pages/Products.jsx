@@ -5,8 +5,10 @@ import ContainerTemplate from '../components/ContainerTemplate';
 import TitleTemplate from '../components/TitleTemplate';
 import { IoIosArrowDown } from 'react-icons/io';
 import { CiFilter } from 'react-icons/ci';
+import { FiChevronRight } from "react-icons/fi";
 import { MdDelete } from 'react-icons/md';
 import { CiEdit } from 'react-icons/ci';
+import { FiChevronLeft } from "react-icons/fi";
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FiTag, FiX } from 'react-icons/fi';
@@ -21,6 +23,7 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilter, setShowFilter] = useState('all');
   const [sortBy, setSortBy] = useState('default');
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 7, total: 0 })
   const [productIdToDelete, setProductIdToDelete] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const defaultImage = 'https://media.istockphoto.com/id/1309352410/ru/%D1%84%D0%BE%D1%82%D0%BE/%D1%87%D0%B8%D0%B7%D0%B1%D1%83%D1%80%D0%B3%D0%B5%D1%80-%D1%81-%D0%BF%D0%BE%D0%BC%D0%B8%D0%B4%D0%BE%D1%80%D0%B0%D0%BC%D0%B8-%D0%B8-%D1%81%D0%B0%D0%BB%D0%B0%D1%82%D0%BE%D0%BC-%D0%BD%D0%B0-%D0%B4%D0%B5%D1%80%D0%B5%D0%B2%D1%8F%D0%BD%D0%BD%D0%BE%D0%B9-%D0%B4%D0%BE%D1%81%D0%BA%D0%B5.jpg?s=612x612&w=0&k=20&c=dW1Aguo-4PEcRs79PUbmMXpx5YrBjqSYiEhwnddbj_g=';
@@ -31,7 +34,13 @@ const Products = () => {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/products`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            page: pagination.current,
+            limit: pagination.pageSize
+          }
+        }
       );
 
       const data = response.data;
@@ -62,6 +71,10 @@ const Products = () => {
       }));
 
       setProducts(mappedProducts);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.total
+      }))
       setFilteredProducts(mappedProducts);
     } catch (err) {
       const msg = err.message || 'Failed to load products';
@@ -114,31 +127,24 @@ const Products = () => {
   };
 
   useEffect(() => {
-    if (token) fetchProducts();
-    else {
-      setError('Please log in to view products');
-      toast.error('Please log in to view products');
-    }
-  }, [token]);
+    fetchProducts();
+  }, [pagination.current, pagination.pageSize, searchQuery]);
 
   useEffect(() => {
     let result = [...products];
 
-    // Filter by search query
     if (searchQuery) {
       result = result.filter(product =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Filter by stock status
     if (showFilter === 'active') {
       result = result.filter(product => product.stock > 0);
     } else if (showFilter === 'out-of-stock') {
       result = result.filter(product => product.stock === 0);
     }
 
-    // Sort products
     if (sortBy === 'price-low-high') {
       result.sort((a, b) => (a.price?.sellingPrice || 0) - (b.price?.sellingPrice || 0));
     } else if (sortBy === 'price-high-low') {
@@ -210,11 +216,6 @@ const Products = () => {
           <button className="btn btn-neutral rounded-lg text-sm" onClick={() => toast.info('Filter functionality not implemented')}>
             <CiFilter className="text-xl" />
             Filter
-          </button>
-          <button className='flex'> 
-            <Link to="/createproduct" className="btn btn-primary rounded-lg flex">
-              Add Product
-            </Link>
           </button>
         </div>
       </div>
@@ -310,10 +311,37 @@ const Products = () => {
               </tbody>
             </table>
           </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 mb-5 p-4">
+            <div className="text-sm text-gray-600">
+              Showing {(pagination.current - 1) * pagination.pageSize + 1} to{' '}
+              {Math.min(pagination.current * pagination.pageSize, pagination.total)} of{' '}
+              {pagination.total} products
+            </div>
+            <div className="join">
+              <button
+                className="join-item btn btn-sm"
+                disabled={pagination.current === 1}
+                onClick={() => setPagination(prev => ({ ...prev, current: prev.current - 1 }))}
+              >
+                <FiChevronLeft />
+              </button>
+              <button className="join-item btn btn-sm">
+                Page {pagination.current}
+              </button>
+              <button
+                className="join-item btn btn-sm"
+                disabled={pagination.current * pagination.pageSize >= pagination.total}
+                onClick={() => setPagination(prev => ({ ...prev, current: prev.current + 1 }))}
+              >
+                <FiChevronRight />
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Edit Modal */}
+
       <dialog id="edit_modal" className="modal">
         <div className="modal-box bg-base-100 dark:bg-gray-800 max-w-lg p-6 rounded-lg border border-base-200 dark:border-gray-700">
           {editingProduct && (
@@ -419,7 +447,6 @@ const Products = () => {
         </div>
       </dialog>
 
-      {/* Delete Modal */}
       <dialog id="delete_modal" className="modal">
         <div className="modal-box bg-base-100 dark:bg-gray-800 max-w-md p-6 rounded-lg border border-base-200 dark:border-gray-700">
           <h3 className="font-bold text-lg text-error">Delete Product</h3>

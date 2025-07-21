@@ -3,29 +3,46 @@ import axios from 'axios'
 import ContainerTemplate from '../components/ContainerTemplate'
 import TitleTemplate from '../components/TitleTemplate'
 import { toast } from 'react-toastify'
+import { FiChevronRight } from "react-icons/fi";
+import { FiChevronLeft } from "react-icons/fi";
 
 const AllUsers = () => {
   const URL = import.meta.env.VITE_BACKEND_URL + '/api/auth/users'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 6, total: 0 })
   const [users, setUsers] = useState([])
+  const start = (pagination.current - 1) * pagination.pageSize;
+  const end = start + pagination.pageSize;
+  const visibleUsers = users.slice(start, end);
 
   const getUsers = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const response = await axios.get(URL)
-      setUsers(response.data)
+      const { data } = await axios.get(URL, {
+        params: {
+          page: pagination.current,
+          limit: pagination.pageSize,
+        }
+      });
+
+      const fetchedUsers = data.users ?? data.data ?? data ?? [];
+      const total = data.total ?? fetchedUsers.length;
+
+      setUsers(fetchedUsers);
+      setPagination(prev => ({ ...prev, total }));
     } catch (err) {
-      setError("Ошибка при загрузке пользователей")
+      setError("Ошибка при загрузке пользователей");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
 
   useEffect(() => {
     getUsers()
-  }, [])
+  }, [pagination.current, pagination.pageSize])
 
   return (
     <ContainerTemplate>
@@ -57,7 +74,7 @@ const AllUsers = () => {
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
+              visibleUsers.map((user) => (
                 <tr key={user._id}>
                   <td>{user._id}</td>
                   <td>
@@ -86,7 +103,36 @@ const AllUsers = () => {
               ))
             )}
           </tbody>
+
         </table>
+        <div>
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 mb-5 p-4">
+            <div className="text-sm text-gray-600">
+              Showing {(pagination.current - 1) * pagination.pageSize + 1} to{' '}
+              {Math.min(pagination.current * pagination.pageSize, pagination.total)} of{' '}
+              {pagination.total} Users
+            </div>
+            <div className="join">
+              <button
+                className="join-item btn btn-sm"
+                disabled={pagination.current === 1}
+                onClick={() => setPagination(prev => ({ ...prev, current: prev.current - 1 }))}
+              >
+                <FiChevronLeft />
+              </button>
+              <button className="join-item btn btn-sm">
+                Page {pagination.current}
+              </button>
+              <button
+                className="join-item btn btn-sm"
+                disabled={pagination.current * pagination.pageSize >= pagination.total}
+                onClick={() => setPagination(prev => ({ ...prev, current: prev.current + 1 }))}
+              >
+                <FiChevronRight />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </ContainerTemplate>
   )

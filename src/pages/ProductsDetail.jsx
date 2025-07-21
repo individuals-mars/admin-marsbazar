@@ -236,7 +236,6 @@ const ProductDetail = () => {
             ))}
           </div>
 
-          {/* Stock Analytics Skeleton */}
           <div className="bg-base-200 p-4 rounded-lg shadow mb-6">
             <div className="flex items-center mb-4">
               <FiTrendingUp className="mr-2 skeleton-icon" />
@@ -245,7 +244,6 @@ const ProductDetail = () => {
             <div className="skeleton h-64 w-full"></div>
           </div>
 
-          {/* Additional Info Skeleton */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[...Array(2)].map((_, i) => (
               <div key={i} className="bg-base-200 p-4 rounded-lg shadow">
@@ -285,7 +283,6 @@ const ProductDetail = () => {
 
   return (
     <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-base-100 min-h-screen">
-      {/* Header */}
       <div className="flex items-center mb-6">
         <button
           onClick={() => navigate(-1)}
@@ -311,7 +308,6 @@ const ProductDetail = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left Column - Product Images */}
         <div className="lg:w-1/3">
           {product.stock < (product.lowStockThreshold || 10) && (
             <div className="flex items-center gap-2 p-3 mb-6 rounded-lg bg-error text-error-content">
@@ -319,7 +315,6 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Images Section */}
           <div className="mb-6 bg-base-200 p-4 rounded-lg shadow">
             <h3 className="mb-3 flex items-center text-lg font-medium text-base-content">
               <FiImage className="mr-2" /> Product Images
@@ -347,7 +342,6 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Description Section */}
           {product.description && (
             <div className="bg-base-200 p-4 rounded-lg shadow mb-6">
               <h3 className="mb-3 flex items-center text-lg font-medium text-base-content">
@@ -360,9 +354,7 @@ const ProductDetail = () => {
           )}
         </div>
 
-        {/* Right Column - Product Info and Analytics */}
         <div className="lg:w-2/3">
-          {/* Info Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div className="bg-base-200 p-4 rounded-lg shadow">
               <div className="flex items-center mb-2 text-base-content/70">

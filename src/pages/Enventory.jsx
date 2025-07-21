@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import {
-  FiArrowLeft, FiPlus, FiPackage, FiTrendingUp, 
+  FiArrowLeft, FiPlus, FiPackage, FiTrendingUp,
   FiAlertCircle, FiEdit, FiTrash2, FiBarChart2,
   FiDollarSign, FiShoppingBag, FiClock, FiChevronLeft,
   FiChevronRight, FiSearch, FiX
@@ -33,21 +33,20 @@ ChartJS.register(
   Filler
 );
 
-const Enventory = () => {
+const Inventory = () => {
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.user);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [modalType, setModalType] = useState(''); // 'add', 'history', 'summary', 'predict'
+  const [modalType, setModalType] = useState('');
   const [inventoryHistory, setInventoryHistory] = useState([]);
   const [stockSummary, setStockSummary] = useState({});
   const [predictionData, setPredictionData] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const deleteModalRef = useRef(null);
 
-  // Fetch products from API
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -59,7 +58,7 @@ const Enventory = () => {
           search: searchQuery
         }
       });
-      
+
       setProducts(response.data.data);
       setPagination(prev => ({
         ...prev,
@@ -77,12 +76,10 @@ const Enventory = () => {
     fetchProducts();
   }, [pagination.current, pagination.pageSize, searchQuery]);
 
-  // Modal control functions
   const openModal = (type, product = null) => {
     setModalType(type);
     setSelectedProduct(product);
-    
-    // Load additional data based on modal type
+
     switch (type) {
       case 'history':
         fetchInventoryHistory(product._id);
@@ -180,8 +177,8 @@ const Enventory = () => {
       render: (text, record) => (
         <div className="flex items-center">
           {record.images?.[0] && (
-            <img 
-              src={record.images[0]} 
+            <img
+              src={record.images[0]}
               alt={record.name}
               className="w-10 h-10 rounded-md object-cover mr-3"
             />
@@ -218,24 +215,28 @@ const Enventory = () => {
           <button
             className="btn btn-xs btn-primary"
             onClick={() => openModal('add', record)}
+            title="Add stock"
           >
             <FiPlus size={14} />
           </button>
           <button
             className="btn btn-xs btn-info"
             onClick={() => openModal('history', record)}
+            title="View history"
           >
             <FiClock size={14} />
           </button>
           <button
             className="btn btn-xs btn-secondary"
             onClick={() => openModal('summary', record)}
+            title="View summary"
           >
             <FiBarChart2 size={14} />
           </button>
           <button
             className="btn btn-xs btn-warning"
             onClick={() => openModal('predict', record)}
+            title="View prediction"
           >
             <FiAlertCircle size={14} />
           </button>
@@ -245,6 +246,7 @@ const Enventory = () => {
               setSelectedProduct(record);
               deleteModalRef.current.showModal();
             }}
+            title="Delete product"
           >
             <FiTrash2 size={14} />
           </button>
@@ -283,7 +285,6 @@ const Enventory = () => {
     },
   ];
 
-  // Stock chart data
   const stockChartData = {
     labels: ['Current', 'Incoming', 'Outgoing', 'Adjusted'],
     datasets: [{
@@ -303,8 +304,7 @@ const Enventory = () => {
   };
 
   return (
-    <div className="w-full mx-auto px-4 py-8 bg-base-100 min-h-screen">
-      {/* Header */}
+    <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center">
           <button
@@ -313,9 +313,9 @@ const Enventory = () => {
           >
             <FiArrowLeft className="mr-2" /> Back
           </button>
-          <h1 className="text-2xl font-semibold">Inventory Management</h1>
+          <h1 className="text-2xl font-bold">Inventory Management</h1>
         </div>
-        
+
         <div className="flex gap-2 w-full sm:w-auto">
           <div className="relative flex-grow sm:w-64">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -335,23 +335,16 @@ const Enventory = () => {
               </button>
             )}
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate('/createproducts')}
-          >
-            <FiPlus className="mr-2" /> Add Product
-          </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="bg-base-200 rounded-lg shadow p-4">
+      <div className="bg-base-100 rounded-lg shadow p-6">
         <div className="overflow-x-auto">
           <table className="table w-full">
             <thead>
-              <tr>
+              <tr className="bg-base-200">
                 {productColumns.map((column) => (
-                  <th key={column.key}>{column.title}</th>
+                  <th key={column.key} className="font-bold">{column.title}</th>
                 ))}
               </tr>
             </thead>
@@ -364,16 +357,16 @@ const Enventory = () => {
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={productColumns.length} className="text-center py-8">
+                  <td colSpan={productColumns.length} className="text-center py-8 text-gray-500">
                     No products found
                   </td>
                 </tr>
               ) : (
                 products.map((product) => (
-                  <tr key={product._id}>
+                  <tr key={product._id} className="hover:bg-base-200">
                     {productColumns.map((column) => (
-                      <td key={column.key}>
-                        {column.render 
+                      <td key={column.key} className="py-4">
+                        {column.render
                           ? column.render(product[column.dataIndex], product)
                           : product[column.dataIndex]}
                       </td>
@@ -385,9 +378,8 @@ const Enventory = () => {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="flex justify-between items-center mt-4">
-          <div>
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+          <div className="text-sm text-gray-600">
             Showing {(pagination.current - 1) * pagination.pageSize + 1} to{' '}
             {Math.min(pagination.current * pagination.pageSize, pagination.total)} of{' '}
             {pagination.total} products
@@ -414,12 +406,11 @@ const Enventory = () => {
         </div>
       </div>
 
-      {/* Add Inventory Modal */}
       {modalType === 'add' && (
         <div className="modal modal-open">
           <div className="modal-box max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">
+              <h3 className="font-bold text-lg">
                 Add Inventory - {selectedProduct?.name}
               </h3>
               <button onClick={closeModal} className="btn btn-sm btn-ghost">
@@ -435,7 +426,7 @@ const Enventory = () => {
             }}>
               <div className="form-control mb-4">
                 <label className="label">
-                  <span className="label-text">Quantity to Add</span>
+                  <span className="label-text font-medium">Quantity to Add</span>
                 </label>
                 <input
                   type="number"
@@ -447,7 +438,7 @@ const Enventory = () => {
               </div>
               <div className="form-control mb-4">
                 <label className="label">
-                  <span className="label-text">Notes</span>
+                  <span className="label-text font-medium">Notes</span>
                 </label>
                 <textarea
                   name="notes"
@@ -469,12 +460,11 @@ const Enventory = () => {
         </div>
       )}
 
-      {/* Inventory History Modal */}
       {modalType === 'history' && (
         <div className="modal modal-open">
           <div className="modal-box max-w-4xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">
+              <h3 className="font-bold text-lg">
                 Inventory History - {selectedProduct?.name}
               </h3>
               <button onClick={closeModal} className="btn btn-sm btn-ghost">
@@ -484,18 +474,18 @@ const Enventory = () => {
             <div className="overflow-x-auto">
               <table className="table w-full">
                 <thead>
-                  <tr>
+                  <tr className="bg-base-200">
                     {historyColumns.map((column) => (
-                      <th key={column.key}>{column.title}</th>
+                      <th key={column.key} className="font-bold">{column.title}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {inventoryHistory.map((record, index) => (
-                    <tr key={index}>
+                    <tr key={index} className="hover:bg-base-200">
                       {historyColumns.map((column) => (
                         <td key={column.key}>
-                          {column.render 
+                          {column.render
                             ? column.render(record[column.dataIndex], record)
                             : record[column.dataIndex]}
                         </td>
@@ -514,12 +504,11 @@ const Enventory = () => {
         </div>
       )}
 
-      {/* Stock Summary Modal */}
       {modalType === 'summary' && (
         <div className="modal modal-open">
           <div className="modal-box max-w-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">
+              <h3 className="font-bold text-lg">
                 Stock Summary - {selectedProduct?.name}
               </h3>
               <button onClick={closeModal} className="btn btn-sm btn-ghost">
@@ -527,7 +516,7 @@ const Enventory = () => {
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="stats shadow">
+              <div className="stats shadow bg-base-100">
                 <div className="stat">
                   <div className="stat-figure text-primary">
                     <FiPackage size={24} />
@@ -537,7 +526,7 @@ const Enventory = () => {
                   <div className="stat-desc">units available</div>
                 </div>
               </div>
-              <div className="stats shadow">
+              <div className="stats shadow bg-base-100">
                 <div className="stat">
                   <div className="stat-figure text-secondary">
                     <FiTrendingUp size={24} />
@@ -547,7 +536,7 @@ const Enventory = () => {
                   <div className="stat-desc">units received</div>
                 </div>
               </div>
-              <div className="stats shadow">
+              <div className="stats shadow bg-base-100">
                 <div className="stat">
                   <div className="stat-figure text-accent">
                     <FiShoppingBag size={24} />
@@ -557,7 +546,7 @@ const Enventory = () => {
                   <div className="stat-desc">units sold</div>
                 </div>
               </div>
-              <div className="stats shadow">
+              <div className="stats shadow bg-base-100">
                 <div className="stat">
                   <div className="stat-figure text-info">
                     <FiEdit size={24} />
@@ -577,6 +566,11 @@ const Enventory = () => {
                   plugins: {
                     legend: { display: false },
                   },
+                  scales: {
+                    y: {
+                      beginAtZero: true
+                    }
+                  }
                 }}
               />
             </div>
@@ -589,12 +583,11 @@ const Enventory = () => {
         </div>
       )}
 
-      {/* Stock Prediction Modal */}
       {modalType === 'predict' && (
         <div className="modal modal-open">
           <div className="modal-box max-w-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">
+              <h3 className="font-bold text-lg">
                 Stock Prediction - {selectedProduct?.name}
               </h3>
               <button onClick={closeModal} className="btn btn-sm btn-ghost">
@@ -602,7 +595,7 @@ const Enventory = () => {
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="stats shadow">
+              <div className="stats shadow bg-base-100">
                 <div className="stat">
                   <div className="stat-figure text-primary">
                     <FiPackage size={24} />
@@ -612,7 +605,7 @@ const Enventory = () => {
                   <div className="stat-desc">units available</div>
                 </div>
               </div>
-              <div className="stats shadow">
+              <div className="stats shadow bg-base-100">
                 <div className="stat">
                   <div className="stat-figure text-secondary">
                     <FiTrendingUp size={24} />
@@ -622,38 +615,38 @@ const Enventory = () => {
                   <div className="stat-desc">units per day</div>
                 </div>
               </div>
-              <div className="stats shadow">
+              <div className="stats shadow bg-base-100">
                 <div className="stat">
                   <div className="stat-figure text-warning">
                     <FiAlertCircle size={24} />
                   </div>
                   <div className="stat-title">Predicted Out of Stock</div>
                   <div className="stat-value">
-                    {predictionData.predictedOutOfStock 
-                      ? new Date(predictionData.predictedOutOfStock).toLocaleDateString() 
+                    {predictionData.predictedOutOfStock
+                      ? new Date(predictionData.predictedOutOfStock).toLocaleDateString()
                       : 'N/A'}
                   </div>
                   <div className="stat-desc">
-                    {predictionData.predictedOutOfStock 
-                      ? `${Math.ceil((new Date(predictionData.predictedOutOfStock) - new Date()) / (1000 * 60 * 60 * 24))} days remaining` 
+                    {predictionData.predictedOutOfStock
+                      ? `${Math.ceil((new Date(predictionData.predictedOutOfStock) - new Date()) / (1000 * 60 * 60 * 24))} days remaining`
                       : 'Insufficient data'}
                   </div>
                 </div>
               </div>
-              <div className="stats shadow">
+              <div className="stats shadow bg-base-100">
                 <div className="stat">
                   <div className="stat-figure text-info">
                     <FiClock size={24} />
                   </div>
                   <div className="stat-title">Recommended Reorder</div>
                   <div className="stat-value">
-                    {predictionData.recommendedReorderDate 
-                      ? new Date(predictionData.recommendedReorderDate).toLocaleDateString() 
+                    {predictionData.recommendedReorderDate
+                      ? new Date(predictionData.recommendedReorderDate).toLocaleDateString()
                       : 'N/A'}
                   </div>
                   <div className="stat-desc">
-                    {predictionData.recommendedReorderDate 
-                      ? 'Order before this date' 
+                    {predictionData.recommendedReorderDate
+                      ? 'Order before this date'
                       : 'Insufficient data'}
                   </div>
                 </div>
@@ -668,12 +661,11 @@ const Enventory = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       <dialog ref={deleteModalRef} className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg text-error">Delete Product</h3>
           <p className="py-4">
-            Are you sure you want to delete {selectedProduct?.name}? This action cannot be undone.
+            Are you sure you want to delete <span className="font-semibold">{selectedProduct?.name}</span>? This action cannot be undone.
           </p>
           <div className="modal-action">
             <form method="dialog" className="flex gap-2">
@@ -691,4 +683,4 @@ const Enventory = () => {
   );
 };
 
-export default Enventory;
+export default Inventory;

@@ -20,6 +20,8 @@ const Sidebar = () => {
       children: [
         { path: "/dashboard", label: "Dashboard" },
         { path: "/orders", label: "Orders" },
+        { path: "/shops", label: "Shops" },
+        { path: "/analytics", label: "Analytics" }
       ]
     },
     {
@@ -32,14 +34,7 @@ const Sidebar = () => {
         { path: "/customers", label: "Customers" },
       ]
     },
-    {
-      label: "Shops",
-      icon: <SiSpringCreators />,
-      children: [
-        { path: "/shops", label: "Shops" },
-        { path: "/modalcreateshops", label: "Create Shops" },
-      ]
-    },
+
     {
       label: "Categories",
       icon: <BsListNested />,
@@ -53,7 +48,6 @@ const Sidebar = () => {
       icon: <RiShoppingBasket2Fill />,
       children: [
         { path: "/products", label: "All Products" },
-        // { path: "/CreateProduct", label: "Create Product" },
         { path: "/enventory", label: "Inventory" },
       ]
     },

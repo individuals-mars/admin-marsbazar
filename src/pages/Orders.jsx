@@ -11,7 +11,9 @@ import { FiRepeat } from "react-icons/fi";
 import { LuArrowBigUp, LuArrowBigDown } from "react-icons/lu";
 import { MdWorkHistory } from "react-icons/md";
 import { BsAwardFill } from "react-icons/bs";
-
+import { FiChevronRight } from "react-icons/fi";
+import { FiChevronLeft } from "react-icons/fi";
+import axios from 'axios';
 
 
 const Orders = () => {
@@ -22,32 +24,45 @@ const Orders = () => {
   const [loading, setLoading] = useState(false);
   const [sortOrderByStatus, setSortOrderByStatus] = useState('asc');
   const [sortOrderByAge, setSortOrderByAge] = useState('asc');
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 7, total: 0 })
   const [sortOrderByGender, setSortOrderByGender] = useState('asc');
   const [lastSortedAge, setLastSortedAge] = useState(null);
-  
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-      console.log("Orderslar ", data);
-      const fetchedOrders = data.data || data || [];
+      const url = new URL(apiUrl, window.location.origin);
+      url.searchParams.set('page', pagination.current);
+      url.searchParams.set('limit', pagination.pageSize);
+      if (searchQuery) url.searchParams.set('search', searchQuery);
+
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      console.log('Orderslar', data);
+
+      const fetchedOrders = data.data ?? data.orders ?? [];
+      const total = data.total ?? data.count ?? fetchedOrders.length;
+
       setOrdersLocal(fetchedOrders);
       setFilteredOrders(fetchedOrders);
+      setPagination((prev) => ({ ...prev, total }));
       dispatch(setOrders(fetchedOrders));
-    } catch (error) {
-      toast.error("Xatolik yuz berdi!");
+    } catch (err) {
+      console.error(err);
+      toast.error('Xatolik yuz berdi!');
     } finally {
       setLoading(false);
     }
   };
 
+
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [pagination.current, pagination.pageSize, searchQuery]);
 
   const handleSearch = () => {
     const lowerQuery = searchQuery.toLowerCase();
@@ -147,9 +162,9 @@ const Orders = () => {
                   </button>
                 </li>
                 <li><button onClick={handleSortByStatus}> <MdWorkHistory className='text-warning' />
-                Sort by Status</button></li>
-                <li><button onClick={handleSortByGender}> <BsAwardFill className='text-info'/>
-                Sort by Gender</button></li>
+                  Sort by Status</button></li>
+                <li><button onClick={handleSortByGender}> <BsAwardFill className='text-info' />
+                  Sort by Gender</button></li>
               </ul>
             </div>
           </div>
@@ -194,7 +209,7 @@ const Orders = () => {
                         <th>{index + 1}</th>
                         <td>{order?.items?.[0]?.name || "Noma'lum"}</td>
                         <td>{order.phone || "Mavjud emas"}</td>
-                        <td>{customer?.items?.age || "Mavjud emas"}</td>  
+                        <td>{customer?.items?.age || "Mavjud emas"}</td>
                         <td>{order.items?.gender || "Male"}</td>
                         <td>{location.city || "Mavjud emas"}</td>
                         <td>{order.deliveryDetails?.address || "Mavjud emas"}</td>
@@ -215,6 +230,32 @@ const Orders = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 mb-5 p-4">
+          <div className="text-sm text-gray-600">
+            Showing {(pagination.current - 1) * pagination.pageSize + 1} to{' '}
+            {Math.min(pagination.current * pagination.pageSize, pagination.total)} of{' '}
+            {pagination.total} products
+          </div>
+          <div className="join">
+            <button
+              className="join-item btn btn-sm"
+              disabled={pagination.current === 1}
+              onClick={() => setPagination(prev => ({ ...prev, current: prev.current - 1 }))}
+            >
+              <FiChevronLeft />
+            </button>
+            <button className="join-item btn btn-sm">
+              Page {pagination.current}
+            </button>
+            <button
+              className="join-item btn btn-sm"
+              disabled={pagination.current * pagination.pageSize >= pagination.total}
+              onClick={() => setPagination(prev => ({ ...prev, current: prev.current + 1 }))}
+            >
+              <FiChevronRight />
+            </button>
           </div>
         </div>
       </div>

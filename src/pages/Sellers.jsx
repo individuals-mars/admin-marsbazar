@@ -3,30 +3,48 @@ import axios from 'axios'
 import ContainerTemplate from '../components/ContainerTemplate'
 import TitleTemplate from '../components/TitleTemplate'
 import { toast } from 'react-toastify'
+import { FiChevronRight } from "react-icons/fi";
+import { FiChevronLeft } from "react-icons/fi";
 
 const Sellers = () => {
   const URL = import.meta.env.VITE_BACKEND_URL + '/api/auth/users'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [sellers, setSellers] = useState([])
-
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 5, total: 0 })
+  const start = (pagination.current - 1) * pagination.pageSize;
+  const end = start + pagination.pageSize;
+  const visibleSellers = sellers.slice(start, end);
 
   const getSellers = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const res = await axios.get(URL)
-      setSellers(res.data.filter((user) => user.role === 'seller'))
+      const res = await axios.get(URL, {
+        params: {
+          page: pagination.current,
+          limit: pagination.pageSize,
+          role: 'seller', // без s
+        }
+      });
+
+      const fetchedUsers = res.data.users ?? res.data.data ?? res.data ?? [];
+      const onlySellers = fetchedUsers.filter(user => user.role === 'seller');
+      const total = res.data.total ?? onlySellers.length;
+
+      setSellers(onlySellers);
+      setPagination(prev => ({ ...prev, total }));
     } catch (err) {
-      setError("Ошибка при загрузке продавцов")
+      setError("Ошибка при загрузке продавцов");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
 
   useEffect(() => {
     getSellers()
-  }, [])
+  }, [pagination.current, pagination.pageSize])
 
   return (
     <ContainerTemplate>
@@ -58,7 +76,7 @@ const Sellers = () => {
                 </td>
               </tr>
             ) : (
-              sellers.map((user) => (
+              visibleSellers.map((user) => (
                 <tr key={user._id}>
                   <td>{user._id}</td>
                   <td>
@@ -88,6 +106,35 @@ const Sellers = () => {
             )}
           </tbody>
         </table>
+
+        <div>
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 mb-5 p-4">
+            <div className="text-sm text-gray-600">
+              Showing {(pagination.current - 1) * pagination.pageSize + 1} to{' '}
+              {Math.min(pagination.current * pagination.pageSize, pagination.total)} of{' '}
+              {pagination.total} Users
+            </div>
+            <div className="join">
+              <button
+                className="join-item btn btn-sm"
+                disabled={pagination.current === 1}
+                onClick={() => setPagination(prev => ({ ...prev, current: prev.current - 1 }))}
+              >
+                <FiChevronLeft />
+              </button>
+              <button className="join-item btn btn-sm">
+                Page {pagination.current}
+              </button>
+              <button
+                className="join-item btn btn-sm"
+                disabled={pagination.current * pagination.pageSize >= pagination.total}
+                onClick={() => setPagination(prev => ({ ...prev, current: prev.current + 1 }))}
+              >
+                <FiChevronRight />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </ContainerTemplate>
   )

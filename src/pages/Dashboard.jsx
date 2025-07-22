@@ -177,7 +177,7 @@ const makeShopPerformanceDataset = (shops) => {
 /* =============================================================
  * Fallback demo data
  * ============================================================= */
-const fallbackMonths = ['Jan','Feb','Mar','Apr','May','Jun'];
+const fallbackMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 const fallbackTopProducts = [
   { name: 'Product A', count: 120, revenue: 1500 },
   { name: 'Product B', count: 90, revenue: 1100 },
@@ -320,7 +320,7 @@ const Dashboard = () => {
     setLoad('analysis', true);
     setErr('analysis', null);
     try {
-      const { data } = await axios.get(`${API_BASE}/api/dashboard/orders-analysis`);
+      const { data } = await fetch(`${API_BASE}/api/dashboard/orders-analysis`);
       setAnalysisData(
         makeOrdersAnalysisDataset({
           currentStock: data.currentStock,
@@ -341,7 +341,7 @@ const Dashboard = () => {
     setLoad('graph', true);
     setErr('graph', null);
     try {
-      const { data } = await axios.get(`${API_BASE}/api/dashboard/orders-graph`);
+      const { data } = await fetch(`${API_BASE}/api/dashboard/orders-graph`);
       const labels = Array.isArray(data.months) ? data.months : Array.isArray(data.labels) ? data.labels : fallbackMonths;
       const counts = Array.isArray(data.counts) ? data.counts : Array.isArray(data.data) ? data.data : [10, 20, 15, 30, 25, 40];
       setOrdersGraphData(makeOrdersGraphDataset({ labels, counts }));
@@ -359,7 +359,7 @@ const Dashboard = () => {
     setLoad('top', true);
     setErr('top', null);
     try {
-      const { data } = await axios.get(`${API_BASE}/api/dashboard/top-products`);
+      const { data } = await fetch(`${API_BASE}/api/dashboard/top-products`);
       const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
       if (!arr.length) throw new Error('empty top-products');
       setTopProductsDataOrders(makeTopProductsDataset(arr));
@@ -379,7 +379,7 @@ const Dashboard = () => {
     setLoad('recent', true);
     setErr('recent', null);
     try {
-      const { data } = await axios.get(`${API_BASE}/api/dashboard/recent-orders`);
+      const { data } = await fetch(`${API_BASE}/api/dashboard/recent-orders`);
       const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
       setRecentOrders(arr.slice(0, 10));
     } catch (err) {
@@ -398,7 +398,7 @@ const Dashboard = () => {
     setLoad('shops', true);
     setErr('shops', null);
     try {
-      const { data } = await axios.get(`${API_BASE}/api/dashboard/shop-performance`);
+      const { data } = await fetch(`${API_BASE}/api/dashboard/shop-performance`);
       const arr = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
       if (!arr.length) throw new Error('empty shop-performance');
       setShopPerformanceData(makeShopPerformanceDataset(arr));
@@ -411,12 +411,12 @@ const Dashboard = () => {
     }
   }, []);
 
-  
+
   const fetchSummary = useCallback(async () => {
     setLoad('summary', true);
     setErr('summary', null);
     try {
-      const { data } = await axios.get(`${API_BASE}/api/dashboard/summary`);
+      const { data } = await fetch(`${API_BASE}/api/dashboard/summary`);
       setSummary(extractSummary(data));
     } catch (err) {
       console.error('summary error', err);
@@ -447,14 +447,14 @@ const Dashboard = () => {
     refreshAll();
     const id = setInterval(() => {
       refreshAll();
-    }, 60000); 
+    }, 60000);
     return () => clearInterval(id);
   }, [refreshAll]);
 
 
-  const [ordersGraphMode, setOrdersGraphMode] = useState('line'); 
-  const [shopGraphMode, setShopGraphMode] = useState('bar'); 
-  const [topProductsMode, setTopProductsMode] = useState('bar'); 
+  const [ordersGraphMode, setOrdersGraphMode] = useState('line');
+  const [shopGraphMode, setShopGraphMode] = useState('bar');
+  const [topProductsMode, setTopProductsMode] = useState('bar');
 
   const OrdersGraphChart = useMemo(() => {
     if (ordersGraphMode === 'bar') {
@@ -494,7 +494,7 @@ const Dashboard = () => {
       </div>
       <hr className="border-base-300" />
 
-      <Card>
+      <Card className=''>
         <SectionTitle icon={FiBarChart2}>Asosiy statistik ma'lumotlar (Summary)</SectionTitle>
         {errors.summary && (
           <div className="alert alert-warning mb-2">{errors.summary}</div>
@@ -508,80 +508,79 @@ const Dashboard = () => {
         {loading.summary && <div className="mt-2 text-sm opacity-70 animate-pulse">Загружаю summary…</div>}
       </Card>
 
-      <Card>
-        <SectionTitle icon={FiTrendingUp}>Buyurtmalar tahlili (Orders Analysis)</SectionTitle>
-        {errors.analysis && (<div className="alert alert-warning mb-2">{errors.analysis} — fallback.</div>)}
-        <div className="h-72">
-          <Line data={analysisData} options={baseOptions} />
-        </div>
-        {loading.analysis && <div className="mt-2 text-sm opacity-70 animate-pulse">Загружаю аналитику…</div>}
-      </Card>
-
-      {/* Orders Graph Monthly */}
-      <Card>
-        <div className="flex items-center justify-between mb-4">
-          <SectionTitle icon={FiBarChart2}>Oylik buyurtmalar soni (Monthly Orders)</SectionTitle>
-          <div className="join join-sm">
-            <button
-              className={`join-item btn btn-xs ${ordersGraphMode === 'line' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setOrdersGraphMode('line')}
-            >Line</button>
-            <button
-              className={`join-item btn btn-xs ${ordersGraphMode === 'bar' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setOrdersGraphMode('bar')}
-            >Bar</button>
+      <div className='flex gap-4'>
+        <Card className=' w-150'>
+          <SectionTitle icon={FiTrendingUp}>Buyurtmalar tahlili (Orders Analysis)</SectionTitle>
+          {errors.analysis && (<div className="alert alert-warning mb-2">{errors.analysis} — fallback.</div>)}
+          <div className="h-72">
+            <Line data={analysisData} options={baseOptions} />
           </div>
-        </div>
-        {errors.graph && (<div className="alert alert-warning mb-2">{errors.graph} — fallback.</div>)}
-        <div className="h-72">{OrdersGraphChart}</div>
-        {loading.graph && <div className="mt-2 text-sm opacity-70 animate-pulse">Загружаю график…</div>}
-      </Card>
+          {loading.analysis && <div className="mt-2 text-sm opacity-70 animate-pulse">Загружаю аналитику…</div>}
+        </Card>
 
-      {/* Top Products */}
-      <Card>
-        <div className="flex items-center justify-between mb-4">
-          <SectionTitle icon={FiPackage}>Eng ko'p sotilgan mahsulotlar (Top Products)</SectionTitle>
-          <div className="join join-sm">
-            <button
-              className={`join-item btn btn-xs ${topProductsMode === 'bar' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setTopProductsMode('bar')}
-            >Bar</button>
-            <button
-              className={`join-item btn btn-xs ${topProductsMode === 'doughnut' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setTopProductsMode('doughnut')}
-            >Doughnut</button>
-            <button
-              className={`join-item btn btn-xs ${topProductsMode === 'pie' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setTopProductsMode('pie')}
-            >Pie</button>
+        <Card className='w-150'>
+          <div className="flex items-center justify-between mb-4">
+            <SectionTitle icon={FiBarChart2}>Oylik buyurtmalar soni (Monthly Orders)</SectionTitle>
+            <div className="join join-sm">
+              <button
+                className={`join-item btn btn-xs ${ordersGraphMode === 'line' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setOrdersGraphMode('line')}
+              >Line</button>
+              <button
+                className={`join-item btn btn-xs ${ordersGraphMode === 'bar' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setOrdersGraphMode('bar')}
+              >Bar</button>
+            </div>
           </div>
-        </div>
-        {errors.top && (<div className="alert alert-warning mb-2">{errors.top} — fallback.</div>)}
-        <div className="h-72">{TopProductsChart}</div>
-        {loading.top && <div className="mt-2 text-sm opacity-70 animate-pulse">Загружаю топ продукты…</div>}
-      </Card>
-
-      {/* Shop Performance */}
-      <Card>
-        <div className="flex items-center justify-between mb-4">
-          <SectionTitle icon={FiShoppingBag}>Har bir shop bo'yicha buyurtma va daromad (Shop Performance)</SectionTitle>
-          <div className="join join-sm">
-            <button
-              className={`join-item btn btn-xs ${shopGraphMode === 'bar' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setShopGraphMode('bar')}
-            >Bar</button>
-            <button
-              className={`join-item btn btn-xs ${shopGraphMode === 'line' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setShopGraphMode('line')}
-            >Line</button>
+          {errors.graph && (<div className="alert alert-warning mb-2">{errors.graph} — fallback.</div>)}
+          <div className="h-72">{OrdersGraphChart}</div>
+          {loading.graph && <div className="mt-2 text-sm opacity-70 animate-pulse">Загружаю график…</div>}
+        </Card>
+      </div>
+      <div className='flex gap-5'>
+        <Card className='w-150'>
+          <div className="flex items-center justify-between mb-4">
+            <SectionTitle icon={FiPackage}>Eng ko'p sotilgan mahsulotlar (Top Products)</SectionTitle>
+            <div className="join join-sm">
+              <button
+                className={`join-item btn btn-xs ${topProductsMode === 'bar' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setTopProductsMode('bar')}
+              >Bar</button>
+              <button
+                className={`join-item btn btn-xs ${topProductsMode === 'doughnut' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setTopProductsMode('doughnut')}
+              >Doughnut</button>
+              <button
+                className={`join-item btn btn-xs ${topProductsMode === 'pie' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setTopProductsMode('pie')}
+              >Pie</button>
+            </div>
           </div>
-        </div>
-        {errors.shops && (<div className="alert alert-warning mb-2">{errors.shops} — fallback.</div>)}
-        <div className="h-72">{ShopPerformanceChart}</div>
-        {loading.shops && <div className="mt-2 text-sm opacity-70 animate-pulse">Загружаю shop performance…</div>}
-      </Card>
+          {errors.top && (<div className="alert alert-warning mb-2">{errors.top} — fallback.</div>)}
+          <div className="h-72">{TopProductsChart}</div>
+          {loading.top && <div className="mt-2 text-sm opacity-70 animate-pulse">Загружаю топ продукты…</div>}
+        </Card>
 
-      {/* Recent Orders */}
+        <Card className='w-150'>
+          <div className="flex items-center justify-between mb-4">
+            <SectionTitle icon={FiShoppingBag}>Har bir shop bo'yicha buyurtma va daromad (Shop Performance)</SectionTitle>
+            <div className="join join-sm">
+              <button
+                className={`join-item btn btn-xs ${shopGraphMode === 'bar' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setShopGraphMode('bar')}
+              >Bar</button>
+              <button
+                className={`join-item btn btn-xs ${shopGraphMode === 'line' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setShopGraphMode('line')}
+              >Line</button>
+            </div>
+          </div>
+          {errors.shops && (<div className="alert alert-warning mb-2">{errors.shops} — fallback.</div>)}
+          <div className="h-72">{ShopPerformanceChart}</div>
+          {loading.shops && <div className="mt-2 text-sm opacity-70 animate-pulse">Загружаю shop performance…</div>}
+        </Card>
+      </div>
+
       <Card>
         <SectionTitle icon={FiShoppingCart}>So'nggi 10 ta buyurtma (Recent Orders)</SectionTitle>
         {errors.recent && (<div className="alert alert-warning mb-2">{errors.recent}</div>)}

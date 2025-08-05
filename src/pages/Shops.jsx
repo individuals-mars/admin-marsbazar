@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { SiGooglemaps } from 'react-icons/si';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { GiReceiveMoney } from 'react-icons/gi';
+import { Link, useNavigate } from 'react-router-dom';
+import { GiReceiveMoney, GiShoppingCart, GiMoneyStack, GiPayMoney } from 'react-icons/gi';
+import { FaPercentage, FaWallet } from 'react-icons/fa';
+import { BsShop } from 'react-icons/bs';
 
 const Shops = () => {
     const [shops, setShops] = useState([]);
@@ -68,69 +70,133 @@ const Shops = () => {
         }
     };
 
+    const getTariffBadgeColor = (tariff) => {
+        switch (tariff?.toLowerCase()) {
+            case 'premium': return 'badge-primary';
+            case 'standard': return 'badge-secondary';
+            case 'basic': return 'badge-accent';
+            default: return 'badge-neutral';
+        }
+    };
 
     return (
         <div className="p-6">
-            
-            <div className="flex justify-between mb-3">
-                <h1 className="font-semibold text-2xl mb-4">Shops</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold flex items-center gap-2">
+                    <BsShop className="text-primary" />
+                    Shops Directory
+                </h1>
+                <div className="text-sm breadcrumbs">
+                    <ul>
+                        <li><a>Dashboard</a></li> 
+                        <li><a className='text-primary'> Shops</a></li>
+                    </ul>
+                </div>
             </div>
-            <hr className="mb-6 border-base-300" />
+
+            <div className="divider"></div>
 
             {fetchLoading ? (
-                <div className="flex flex-wrap gap-6">
-                    {[...Array(7)].map((_, i) => (
-                        <div key={i} className="skeleton h-[260px] w-[390px] mt-3"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="card bg-base-200 animate-pulse h-64 border border-base-300">
+                            <div className="card-body">
+                                <div className="flex items-center space-x-4">
+                                    <div className="rounded-full bg-base-300 h-16 w-16"></div>
+                                    <div className="flex-1 space-y-3">
+                                        <div className="h-4 bg-base-300 rounded w-3/4"></div>
+                                        <div className="h-3 bg-base-300 rounded w-1/2"></div>
+                                    </div>
+                                </div>
+                                <div className="divider my-2"></div>
+                                <div className="grid grid-cols-4 gap-2 mt-4">
+                                    {[...Array(4)].map((_, i) => (
+                                        <div key={i} className="flex flex-col items-center">
+                                            <div className="h-3 bg-base-300 rounded w-3/4 mb-1"></div>
+                                            <div className="h-2 bg-base-300 rounded w-1/2"></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     ))}
                 </div>
             ) : shops.length === 0 ? (
-                <p className="text-center text-gray-500">No shops available</p>
+                <div className="text-center py-12">
+                    <div className="inline-block p-6 bg-base-200 rounded-full mb-4">
+                        <BsShop className="text-4xl text-base-content/30" />
+                    </div>
+                    <h3 className="text-xl font-medium mb-2">No shops available</h3>
+                    <p className="text-base-content/60">Create your first shop to get started</p>
+                </div>
             ) : (
-                <div className="flex flex-wrap gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {shops.map((shop, index) => (
                         <div
                             key={shop._id || index}
-                            className="card bg-base-100 shadow-xl w-[390px] h-[260px] cursor-pointer hover:shadow-2xl transition-shadow relative border border-base-300"
+                            className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow cursor-pointer border border-base-200 hover:border-primary/20"
                             onClick={() => handleShopClick(shop._id)}
                         >
-                            <div className="card-body flex flex-row items-center gap-4">
-                                <img
-                                    src={shop.logotype || defaultLogo}
-                                    alt={`${shop.shopname} logo`}
-                                    className="w-24 h-24 object-contain rounded-full"
-                                />
-                                <div>
-                                    <h2 className="card-title text-lg">{shop.shopname}</h2>
-                                    <p className="text-sm text-gray-500 flex mt-2">
-                                        <SiGooglemaps className="mr-1 mt-2" />
-                                        {shop.address || 'Tashkent, Uzbekistan'}
-                                    </p>
-                                    <p className={`text-sm flex mt-2 bg-transparent rounded px-1 ${shop.TariffPlan === 'premium' ? 'bg-gradient-to-r from-blue-600 to-orange-900' : shop.TariffPlan === 'standard' ? 'bg-gradient-to-r from-sky-950 to-cyan-400' : 'bg-gradient-to-tr from-orange-300 to-blue-900'} bg-clip-text text-transparent`}>
-                                        <GiReceiveMoney className={`mr-1 mt-1 size-3  ${shop.TariffPlan === 'premium' ? 'text-blue-600' : shop.TariffPlan === 'standard' ? 'text-cyan-400' : 'text-orange-300'}`} />
-                                        {shop.TariffPlan || 'basic'}
-                                    </p>
+                            <div className="card-body p-5">
+                                <div className="flex items-start gap-4">
+                                    <div className="avatar">
+                                        <div className="w-16 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                                            <img
+                                                src={shop.logotype || defaultLogo}
+                                                alt={`${shop.shopname} logo`}
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h2 className="card-title text-lg">{shop.shopname}</h2>
+                                        <div className="flex items-center text-sm text-base-content/70 mt-1">
+                                            <SiGooglemaps className="mr-1" />
+                                            {shop.address || 'Tashkent, Uzbekistan'}
+                                        </div>
+                                        <div className="mt-2">
+                                            <span className={`badge gap-1 ${getTariffBadgeColor(shop.TariffPlan)}`}>
+                                                <GiReceiveMoney className="text-sm" />
+                                                {shop.TariffPlan || 'basic'}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <hr className="border-base-300" />
-                            <div className="flex justify-between p-5 text-center">
-                                <div>
-                                    <p className="font-bold text-base-350">{shop.commission || '10%'}</p>
-                                    <p className="text-xs text-base-350">Commission</p>
-                                </div>
-                                <p className="text-base-300">|</p>
-                                <div>
-                                    <p className="font-bold text-base-350">{shop.sales || '0'}</p>
-                                    <p className="text-xs text-base-350">Sales</p>
-                                </div>
-                                <p className="text-base-300">|</p>
-                                <div>
-                                    <p className="font-bold text-base-350">{shop.balance || '0'}</p>
-                                    <p className="text-xs text-base-350">Balance</p>
-                                </div>
-                                <p className="text-base-300">|</p>
-                                <div>
-                                    <p className="font-bold text-base-350">{shop.withdraw || '0'}</p>
-                                    <p className="text-xs text-base-350">Withdraw</p>
+
+                                <div className="divider my-2"></div>
+
+                                <div className="stats stats-horizontal shadow bg-base-200">
+                                    <div className="stat p-3">
+                                        <div className="stat-figure text-primary">
+                                            <FaPercentage className="text-lg" />
+                                        </div>
+                                        <div className="stat-title">Commission</div>
+                                        <div className="stat-value text-sm">{shop.commission || '10%'}</div>
+                                    </div>
+                                    
+                                    <div className="stat p-3">
+                                        <div className="stat-figure text-secondary">
+                                            <GiShoppingCart className="text-lg" />
+                                        </div>
+                                        <div className="stat-title">Sales</div>
+                                        <div className="stat-value text-sm">{shop.sales || '0'}</div>
+                                    </div>
+                                    
+                                    <div className="stat p-3">
+                                        <div className="stat-figure text-accent">
+                                            <FaWallet className="text-lg" />
+                                        </div>
+                                        <div className="stat-title">Balance</div>
+                                        <div className="stat-value text-sm">{shop.balance || '0'}</div>
+                                    </div>
+                                    
+                                    <div className="stat p-3">
+                                        <div className="stat-figure text-info">
+                                            <GiPayMoney className="text-lg" />
+                                        </div>
+                                        <div className="stat-title">Withdraw</div>
+                                        <div className="stat-value text-sm">{shop.withdraw || '0'}</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

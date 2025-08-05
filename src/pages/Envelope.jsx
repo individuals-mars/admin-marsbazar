@@ -13,8 +13,8 @@ const Envelope = () => {
   const token = useSelector((state) => state.user.token);
 
   const [coupons, setCoupons] = useState([]);
-  const [fetchLoading, setFetchLoading] = useState(false); 
-  const [loading, setLoading] = useState(false); 
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [pagination, setPagination] = useState({
     current: 1,
@@ -48,30 +48,18 @@ const Envelope = () => {
 
     setFetchLoading(true);
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/coupons`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            page: pagination.current,
-            limit: pagination.pageSize,
-          },
-        }
-      );
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/coupons`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          page: pagination.current,
+          limit: pagination.pageSize,
+        },
+      });
 
-      if (!res.data) {
-        throw new Error('No data received from server');
-      }
-
-      const fetched =
-        res.data.coupons ??
-        res.data.data ??
-        (Array.isArray(res.data) ? res.data : []) ??
-        [];
-
+      const fetched = res.data.coupons ?? res.data.data ?? (Array.isArray(res.data) ? res.data : []);
       const total = res.data.total ?? res.data.count ?? fetched.length;
 
       setCoupons(fetched);
@@ -106,9 +94,9 @@ const Envelope = () => {
     setEditCouponId(coupon._id);
     setEditedCoupon({
       _id: coupon._id,
-      code: coupon.code,
-      type: coupon.type,
-      amount: coupon.amount,
+      code: coupon.code || '',
+      type: coupon.type || 'percent',
+      amount: coupon.amount || '',
       usageLimit: coupon.usageLimit || '',
       image: coupon.image || '',
       validDays: coupon.validDays || '',
@@ -170,14 +158,11 @@ const Envelope = () => {
 
     setLoading(true);
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/coupons/${deleteCouponId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/coupons/${deleteCouponId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setCoupons((list) => list.filter((c) => c._id !== deleteCouponId));
       setPagination((p) => ({ ...p, total: p.total - 1 }));
       toast.success('Coupon deleted successfully!');
@@ -191,219 +176,370 @@ const Envelope = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-base-content">Coupons</h1>
-      </div>
-
-      {fetchLoading ? (
-        <p className="text-center">Loading...</p>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Banner</th>
-                  <th>Code</th>
-                  <th>Discount</th>
-                  <th>Type</th>
-                  <th>Usage Limit</th>
-                  <th>Valid Days</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleCoupons.map((c) => (
-                  <tr key={c._id}>
-                    <td>#{c._id}</td>
-                    <td>
-                      <img
-                        src={c.image}
-                        className="w-20 rounded-lg shadow-sm"
-                        alt="Coupon"
-                      />
-                    </td>
-                    <td>{c.code}</td>
-                    <td>
-                      {c.amount}
-                      {c.type === 'percent' ? '%' : c.type === 'fixed' ? '$' : ''}
-                    </td>
-                    <td className="capitalize">
-                      {c.type?.replace('_', ' ') || 'Not specified'}
-                    </td>
-                    <td>{c.usageLimit || 0}</td>
-                    <td>{c.validDays || 0}</td>
-                    <td className="flex gap-2">
-                      <button
-                        className="btn btn-sm btn-outline btn-warning"
-                        onClick={() => handleEdit(c)}
-                      >
-                        <MdEdit />
-                      </button>
-                      <button
-                        className="btn btn-sm btn-outline btn-error"
-                        onClick={() => handleDelete(c._id)}
-                      >
-                        <MdDelete />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {!visibleCoupons.length && (
-                  <tr>
-                    <td colSpan={8} className="text-center py-8 opacity-60">
-                      No coupons found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+    <div className="min-h-screen bg-gradient-to-br from-base-50 to-base-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-base-800">Coupon Management</h1>
+            <p className="text-base-600 mt-1">Manage your discount coupons and promotions</p>
           </div>
+        </div>
 
-          {/* Pagination */}
-          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 mb-5 p-4">
-            <div className="text-sm text-gray-600">
-              Showing {pagination.total === 0 ? 0 : start + 1} to{' '}
-              {Math.min(end, pagination.total)} of {pagination.total} Coupons
-            </div>
-            <div className="join">
-              <button
-                className="join-item btn btn-sm"
-                disabled={pagination.current === 1}
-                onClick={() =>
-                  setPagination((p) => ({ ...p, current: p.current - 1 }))
-                }
-              >
-                <FiChevronLeft />
-              </button>
-              <button className="join-item btn btn-sm">
-                Page {pagination.current} / {totalPages}
-              </button>
-              <button
-                className="join-item btn btn-sm"
-                disabled={pagination.current >= totalPages}
-                onClick={() =>
-                  setPagination((p) => ({ ...p, current: p.current + 1 }))
-                }
-              >
-                <FiChevronRight />
-              </button>
-            </div>
+        {fetchLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
-        </>
-      )}
-
-      {editCouponId && (
-        <div className="fixed inset-0 bg-opacity-50 bg-base-200/70 flex items-center justify-center z-50">
-          <div className="bg-base-100 rounded-2xl shadow-lg p-6 w-full max-w-md animate-scale-up">
-            <h2 className="text-2xl font-bold mb-6 text-center text-base-content">
-              ✏️ Edit Coupon{' '}
-              <span className="text-primary">#{editedCoupon._id.slice(-4)}</span>
-            </h2>
-            <form onSubmit={handleEditSubmit} className="space-y-4">
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                placeholder="Code"
-                name="code"
-                value={editedCoupon.code}
-                onChange={handleChange}
-                required
-              />
-              <input
-                type="number"
-                className="input input-bordered w-full"
-                placeholder="Amount"
-                name="amount"
-                value={editedCoupon.amount}
-                onChange={handleChange}
-                required
-                min="0"
-              />
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                placeholder="Image URL"
-                name="image"
-                value={editedCoupon.image}
-                onChange={handleChange}
-              />
-              <select
-                className="select select-bordered w-full"
-                name="type"
-                value={editedCoupon.type}
-                onChange={handleChange}
-              >
-                <option value="percent">Percent</option>
-                <option value="fixed">Fixed</option>
-              </select>
-              <input
-                type="number"
-                className="input input-bordered w-full"
-                placeholder="Usage Limit"
-                name="usageLimit"
-                value={editedCoupon.usageLimit}
-                onChange={handleChange}
-                min="0"
-              />
-              <input
-                type="number"
-                className="input input-bordered w-full"
-                placeholder="Valid Days"
-                name="validDays"
-                value={editedCoupon.validDays}
-                onChange={handleChange}
-                min="0"
-                required
-              />
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  className="btn btn-outline btn-error"
-                  onClick={() => setEditCouponId(null)}
-                >
-                  ❌ Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading}
-                >
-                  {loading ? 'Saving...' : '💾 Save'}
-                </button>
+        ) : (
+          <>
+            <div className="bg-base-200 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="table w-full">
+                  <thead className="bg-base-50">
+                    <tr>
+                      <th className="text-base-600 font-medium">ID</th>
+                      <th className="text-base-600 font-medium">Banner</th>
+                      <th className="text-base-600 font-medium">Code</th>
+                      <th className="text-base-600 font-medium">Discount</th>
+                      <th className="text-base-600 font-medium">Type</th>
+                      <th className="text-base-600 font-medium">Usage Limit</th>
+                      <th className="text-base-600 font-medium">Valid Days</th>
+                      <th className="text-base-600 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleCoupons.map((c) => (
+                      <tr key={c._id} className="hover:bg-base-50 transition-colors">
+                        <td className="font-mono text-sm text-base-500">#{c._id.slice(-6)}</td>
+                        <td>
+                          <div className="avatar">
+                            <div className="mask mask-squircle w-12 h-12">
+                              <img
+                                src={c.image || 'https://via.placeholder.com/100?text=Coupon'}
+                                alt="Coupon"
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="font-mono font-semibold bg-base-100 px-2 py-1 rounded">
+                            {c.code}
+                          </span>
+                        </td>
+                        <td className="font-semibold">
+                          {c.amount}
+                          {c.type === 'percent' ? '%' : c.type === 'fixed' ? '$' : ''}
+                        </td>
+                        <td>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                              c.type === 'percent'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            {c.type?.replace('_', ' ') || 'Not specified'}
+                          </span>
+                        </td>
+                        <td>{c.usageLimit || 'Unlimited'}</td>
+                        <td>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              c.validDays > 30
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                          >
+                            {c.validDays || 0} days
+                          </span>
+                        </td>
+                        <td>
+                          <div className="flex space-x-2">
+                            <button
+                              className="btn btn-sm btn-ghost btn-square text-blue-600 hover:bg-blue-50"
+                              onClick={() => handleEdit(c)}
+                              title="Edit"
+                            >
+                              <MdEdit className="w-5 h-5" />
+                            </button>
+                            <button
+                              className="btn btn-sm btn-ghost btn-square text-red-600 hover:bg-red-50"
+                              onClick={() => handleDelete(c._id)}
+                              title="Delete"
+                            >
+                              <MdDelete className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {!visibleCoupons.length && (
+                      <tr>
+                        <td colSpan={8} className="text-center py-12">
+                          <div className="flex flex-col items-center justify-center text-base-400">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-12 w-12 mb-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"
+                              />
+                            </svg>
+                            <p className="text-lg">No coupons found</p>
+                            <p className="text-sm mt-1">Create your first coupon to get started</p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {deleteCouponId && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-base-200/70">
-          <div className="bg-base-100 rounded-lg p-6 w-full max-w-md shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">Confirm Deletion</h2>
-            <p>Are you sure you want to delete this coupon? This action cannot be undone.</p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                className="btn btn-ghost"
-                onClick={() => setDeleteCouponId(null)}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-error"
-                onClick={confirmDelete}
-                disabled={loading}
-              >
-                {loading ? 'Deleting...' : 'Delete'}
-              </button>
+              {/* Pagination */}
+              <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-base-200 bg-base-50 rounded-b-xl">
+                <div className="text-sm text-base-600 mb-4 sm:mb-0">
+                  Showing <span className="font-medium">{pagination.total === 0 ? 0 : start + 1}</span> to{' '}
+                  <span className="font-medium">{Math.min(end, pagination.total)}</span> of{' '}
+                  <span className="font-medium">{pagination.total}</span> Coupons
+                </div>
+                <div className="join">
+                  <button
+                    className="join-item btn btn-sm btn-ghost"
+                    disabled={pagination.current === 1}
+                    onClick={() => setPagination((p) => ({ ...p, current: p.current - 1 }))}
+                  >
+                    <FiChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button className="join-item btn btn-sm btn-ghost">
+                    Page {pagination.current} of {totalPages}
+                  </button>
+                  <button
+                    className="join-item btn btn-sm btn-ghost"
+                    disabled={pagination.current >= totalPages}
+                    onClick={() => setPagination((p) => ({ ...p, current: p.current + 1 }))}
+                  >
+                    <FiChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Edit Coupon Modal */}
+        {editCouponId && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md transform transition-all duration-200 ease-out animate-fade-in">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-base-800">
+                    Edit Coupon <span className="text-primary">#{editedCoupon._id.slice(-4)}</span>
+                  </h2>
+                  <button
+                    onClick={() => setEditCouponId(null)}
+                    className="btn btn-sm btn-circle btn-ghost"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <form onSubmit={handleEditSubmit} className="space-y-4">
+                  <div>
+                    <label className="label">
+                      <span className="label-text">Coupon Code</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="input input-bordered w-full focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="SUMMER20"
+                      name="code"
+                      value={editedCoupon.code}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="label">
+                        <span className="label-text">Discount Amount</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="input input-bordered w-full"
+                        placeholder="20"
+                        name="amount"
+                        value={editedCoupon.amount}
+                        onChange={handleChange}
+                        required
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="label">
+                        <span className="label-text">Discount Type</span>
+                      </label>
+                      <select
+                        className="select select-bordered w-full"
+                        name="type"
+                        value={editedCoupon.type}
+                        onChange={handleChange}
+                      >
+                        <option value="percent">Percentage (%)</option>
+                        <option value="fixed">Fixed Amount ($)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">
+                      <span className="label-text">Banner Image URL</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="input input-bordered w-full"
+                      placeholder="https://example.com/image.jpg"
+                      name="image"
+                      value={editedCoupon.image}
+                      onChange={handleChange}
+                    />
+                    {editedCoupon.image && (
+                      <div className="mt-2">
+                        <div className="text-xs text-base-500 mb-1">Preview:</div>
+                        <img
+                          src={editedCoupon.image}
+                          className="h-20 rounded border object-cover"
+                          alt="Coupon preview"
+                          onError={(e) => {
+                            e.target.src = 'https://via.placeholder.com/100?text=Invalid+URL';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="label">
+                        <span className="label-text">Usage Limit</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="input input-bordered w-full"
+                        placeholder="0 for unlimited"
+                        name="usageLimit"
+                        value={editedCoupon.usageLimit}
+                        onChange={handleChange}
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="label">
+                        <span className="label-text">Valid Days</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="input input-bordered w-full"
+                        placeholder="30"
+                        name="validDays"
+                        value={editedCoupon.validDays}
+                        onChange={handleChange}
+                        min="0"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => setEditCouponId(null)}
+                      disabled={loading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="loading loading-spinner"></span>
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Changes'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteCouponId && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md transform transition-all duration-200 ease-out animate-fade-in">
+              <div className="p-6">
+                <div className="text-center">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                    <svg
+                      className="h-6 w-6 text-red-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-base-900 mt-3">Delete Coupon</h3>
+                  <div className="mt-2 text-sm text-base-500">
+                    <p>Are you sure you want to delete this coupon? This action cannot be undone.</p>
+                  </div>
+                </div>
+                <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                  <button
+                    type="button"
+                    className="btn btn-ghost w-full sm:col-start-2"
+                    onClick={confirmDelete}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="loading loading-spinner"></span>
+                        Deleting...
+                      </>
+                    ) : (
+                      'Delete'
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline mt-3 w-full sm:mt-0"
+                    onClick={() => setDeleteCouponId(null)}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

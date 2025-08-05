@@ -232,11 +232,11 @@ const Products = () => {
       )}
 
       {!loading && !error && filteredProducts.length > 0 && (
-        <div className="mt-5 rounded-lg bg-base-100 dark:bg-gray-800 border border-base-200 dark:border-gray-700">
+        <div className="mt-5 rounded-lg bg-base">
           <div className="overflow-x-auto">
             <table className="table text-sm">
               <thead>
-                <tr className="text-base-content dark:text-gray-200">
+                <tr className="text-base-content dark:text-gray-700">
                   <th><input type="checkbox" className="checkbox checkbox-sm" /></th>
                   <th>Product</th>
                   <th>Category</th>
@@ -253,7 +253,7 @@ const Products = () => {
                 {filteredProducts.map((product) => (
                   <tr
                     key={product._id}
-                    className="hover:bg-base-200/50 dark:hover:bg-gray-700/50 cursor-pointer"
+                    className="hover:bg-base-200/50 dark:hover:bg-base-300 cursor-pointer"
                     onClick={() => handleProductsClick(product._id)}
                   >
                     <td><input type="checkbox" className="checkbox checkbox-sm" /></td>

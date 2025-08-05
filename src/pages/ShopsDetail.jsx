@@ -1,724 +1,592 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { MdArrowBack, MdDelete, MdEdit } from 'react-icons/md';
-import { FaBan } from 'react-icons/fa';
+import { MdArrowBack, MdDelete, MdEdit, MdLocationOn, MdImage, MdPerson, MdInventory } from 'react-icons/md';
+import { FaBan, FaRegCalendarAlt } from 'react-icons/fa';
+import { GiReceiveMoney } from 'react-icons/gi';
+import { SiGooglemaps } from 'react-icons/si';
+import { BsInfoCircle, BsImages } from 'react-icons/bs';
 import { useSelector } from 'react-redux';
 
 const ShopDetail = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const [shop, setShop] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [deleteLoading, setDeleteLoading] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [showBanModal, setShowBanModal] = useState(false);
-    const [banFormData, setBanFormData] = useState({
-        from: '',
-        to: '',
-        reason: '',
-    });
-    const [editFormData, setEditFormData] = useState({
-        shopname: '',
-        address: '',
-        description: '',
-        logotype: '',
-        location: { lat: '', lon: '' },
-        TariffPlan: 'basic',
-    });
-    const [errors, setErrors] = useState({});
-    const defaultLogo =
-        'https://images-platform.99static.com//JO7XwrpaHhBzdsNOT-cGvqUuKEs=/81x82:917x918/fit-in/500x500/99designs-contests-attachments/103/103078/attachment_103078046';
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const token = useSelector((state) => state.user.token);
+  const defaultLogo = 'https://images-platform.99static.com//JO7XwrpaHhBzdsNOT-cGvqUuKEs=/81x82:917x918/fit-in/500x500/99designs-contests-attachments/103/103078/attachment_103078046';
+  const defaultBanner = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpTQZ2ymiyWERMbA6iLXtu-GdpqGqVpWKlLg&s';
 
-    const token = useSelector((state) => state.user.token);
+  const [shop, setShop] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [modalState, setModalState] = useState({
+    edit: false,
+    delete: false,
+    banner: false,
+    ban: false,
+  });
+  const [formData, setFormData] = useState({
+    shopname: '',
+    address: '',
+    description: '',
+    logotype: '',
+    banner: '',
+    banReason: '',
+    banFrom: '',
+    banTo: ''
+  });
 
-    useEffect(() => {
-        const fetchShop = async () => {
-            if (!token) {
-                toast.error('Please log in to view shop details');
-                navigate('/login');
-                setLoading(false);
-                return;
-            }
-
-            setLoading(true);
-            try {
-                console.log('Fetching shop from:', `${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}`);
-                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-                if (!response.ok) {
-                    let errorMessage = 'Failed to fetch shop details';
-                    try {
-                        const text = await response.text();
-                        console.log('Response status:', response.status, 'Response text:', text);
-                        if (text.startsWith('<!DOCTYPE')) {
-                            throw new Error('Received HTML instead of JSON. Check if /api/shops/:id endpoint exists.');
-                        }
-                        const errorData = JSON.parse(text);
-                        errorMessage = errorData.message || errorMessage;
-                    } catch (_) { }
-                    throw new Error(errorMessage);
-                }
-                const data = await response.json();
-                console.log('Shop data:', data);
-                console.log('Owner data:', data.owner); // Debug owner data
-                setShop(data);
-                setEditFormData({
-                    shopname: data.shopname || '',
-                    address: data.address || '',
-                    description: data.description || '',
-                    logotype: data.logotype || '',
-                    location: {
-                        lat: data.location?.lat?.toString() || '',
-                        lon: data.location?.lon?.toString() || '',
-                    },
-                    TariffPlan: data.TariffPlan?.toLowerCase() || 'basic',
-                });
-            } catch (err) {
-                console.error('Error fetching shop:', err);
-                if (err.message.includes('Unauthorized') || err.message.includes('Invalid token')) {
-                    toast.error('Session expired. Please log in again.');
-                    navigate('/login');
-                } else if (err.message.includes('Shop not found')) {
-                    toast.error('Shop not found');
-                    navigate('/shops');
-                } else {
-                    toast.error(err.message || 'Failed to load shop details');
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchShop();
-    }, [id, token, navigate]);
-
-    const validateForm = () => {
-        const newErrors = {};
-        if (!editFormData.shopname.trim()) newErrors.shopname = 'Shop name is required';
-        if (!editFormData.address.trim()) newErrors.address = 'Address is required';
-        if (editFormData.logotype && !editFormData.logotype.match(/^https?:\/\/.*\.(png|jpg|jpeg|gif)$/)) {
-            newErrors.logotype = 'Logo must be a valid image URL';
-        }
-        const lat = parseFloat(editFormData.location.lat);
-        const lon = parseFloat(editFormData.location.lon);
-        if (editFormData.location.lat && (isNaN(lat) || lat < -90 || lat > 90)) {
-            newErrors.lat = 'Latitude must be a number between -90 and 90';
-        }
-        if (editFormData.location.lon && (isNaN(lon) || lon < -180 || lon > 180)) {
-            newErrors.lon = 'Longitude must be a number between -180 and 180';
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleEditShop = async () => {
-        if (!token) {
-            toast.error('Please log in to edit a shop');
-            return;
-        }
-
-        if (!validateForm()) {
-            toast.error('Please fix form errors');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const payload = {
-                shopname: editFormData.shopname,
-                address: editFormData.address,
-                description: editFormData.description,
-                logotype: editFormData.logotype || '',
-                location: {
-                    lat: editFormData.location.lat ? parseFloat(editFormData.location.lat) : undefined,
-                    lon: editFormData.location.lon ? parseFloat(editFormData.location.lon) : undefined,
-                },
-                TariffPlan: editFormData.TariffPlan,
-            };
-            console.log('Edit payload:', payload);
-
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                let errorMessage = 'Error updating shop';
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                } catch (_) { }
-                throw new Error(errorMessage);
-            }
-
-            const updatedShop = await response.json();
-            setShop(updatedShop);
-            setShowEditModal(false);
-            setErrors({});
-            toast.success('Shop updated successfully');
-        } catch (err) {
-            console.error('Error updating shop:', err);
-            toast.error(err.message || 'Error updating shop');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleBanShop = async () => {
-        if (!token) {
-            toast.error('Please log in to ban a shop');
-            navigate('/login');
-            return;
-        }
-
-        if (!banFormData.from || !banFormData.to || !banFormData.reason.trim()) {
-            toast.error('Please fill out all ban fields');
-            return;
-        }
-
-        setDeleteLoading(true);
-
-        try {
-            const payload = {
-                from: banFormData.from,
-                to: banFormData.to,
-                reason: banFormData.reason.trim(),
-            };
-
-            console.log("Ban payload", payload);
-
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/ban/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                let errorMessage = 'Failed to ban shop';
-                if (response.status === 401 || response.status === 403) {
-                    toast.error('Session expired or access denied. Please log in again.');
-                    navigate('/login');
-                    return;
-                }
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                } catch (_) { }
-                throw new Error(errorMessage);
-            }
-
-            toast.success('Shop banned successfully');
-            setShowBanModal(false);
-            navigate('/shops');
-        } catch (err) {
-            console.error('Ban Error:', err);
-            toast.error(err.message || 'Failed to ban shop');
-        } finally {
-            setDeleteLoading(false);
-        }
-    };
-
-
-    const handleDeleteShop = async () => {
-        if (!token) {
-            toast.error('Please log in to delete a shop');
-            navigate('/login');
-            return;
-        }
-
-        setDeleteLoading(true);
-        try {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (!response.ok) {
-                let errorMessage = 'Failed to delete shop';
-                if (response.status === 401 || response.status === 403) {
-                    toast.error('Session expired or access denied. Please log in again.');
-                    navigate('/login');
-                    return;
-                }
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                } catch (_) { }
-                throw new Error(errorMessage);
-            }
-
-            toast.success('Shop deleted successfully');
-            setShowDeleteModal(false);
-            navigate('/shops');
-        } catch (err) {
-            console.error('Delete Error:', err);
-            toast.error(err.message || 'Failed to delete shop');
-        } finally {
-            setDeleteLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        const handleEsc = (e) => {
-            if (e.key === 'Escape') {
-                setShowEditModal(false);
-                setShowDeleteModal(false);
-                setShowBanModal(false);
-            }
-        };
-        document.addEventListener('keydown', handleEsc);
-        return () => document.removeEventListener('keydown', handleEsc);
-    }, []);
-
-    if (loading) {
-        return (
-            <div className="fixed inset-0 flex items-center justify-center bg-gray-100/70 backdrop-blur-sm z-50">
-                <div className="flex flex-col items-center gap-3">
-                    <span className="loading loading-infinity w-16 h-16 text-primary"></span>
-                    <p className="text-base font-medium text-gray-600">Loading Shop Details...</p>
-                </div>
-            </div>
-        );
+  // Fetch shop data with products
+  const fetchShopWithProducts = useCallback(async () => {
+    if (!token) {
+      toast.error('Please log in to view shop details');
+      navigate('/login');
+      return;
     }
 
-    if (!shop) {
-        return (
-            <div className="flex justify-center items-center h-screen w-screen bg-base-200 dark:bg-gray-800">
-                <div className="text-center">
-                    <p className="text-lg font-medium text-gray-500 dark:text-gray-400">Shop not found</p>
-                    <button
-                        className="mt-4 btn btn-primary btn-sm"
-                        onClick={() => navigate('/shops')}
-                        aria-label="Back to shops"
-                    >
-                        Back to Shops
-                    </button>
-                </div>
-            </div>
-        );
+    setLoading(true);
+    try {
+      // Fetch shop details
+      const shopResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}/with-products`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!shopResponse.ok) {
+        throw new Error('Failed to fetch shop details');
+      }
+
+      const shopData = await shopResponse.json();
+      setShop(shopData.shop);
+      setProducts(shopData.products || []);
+
+      setFormData({
+        shopname: shopData.shop.shopname || '',
+        address: shopData.shop.address || '',
+        description: shopData.shop.description || '',
+        logotype: shopData.shop.logotype || '',
+        banner: shopData.shop.banner || '',
+      });
+    } catch (error) {
+      console.error('Error fetching shop:', error);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, token, navigate]);
+
+  // Handle shop actions
+  const handleShopAction = async (action) => {
+    if (!token) {
+      toast.error('Please log in to perform this action');
+      navigate('/login');
+      return;
     }
 
+    setActionLoading(true);
+    try {
+      if (action === 'edit') {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update shop');
+        }
+
+        const updatedShop = await response.json();
+        setShop(updatedShop);
+        toast.success('Shop updated successfully');
+        setModalState({ ...modalState, edit: false });
+      } else if (action === 'delete') {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete shop');
+        }
+
+        toast.success('Shop deleted successfully');
+        navigate('/shops');
+      } else if (action === 'banner') {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}/banner`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ banner: formData.banner }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update banner');
+        }
+
+        const updatedShop = await response.json();
+        setShop(updatedShop);
+        toast.success('Banner updated successfully');
+        setModalState({ ...modalState, banner: false });
+      } else if (action === 'ban') {
+        // Validate ban dates
+        if (!formData.banFrom || !formData.banTo) {
+          toast.error('Please select both start and end dates');
+          return;
+        }
+
+        if (new Date(formData.banFrom) >= new Date(formData.banTo)) {
+          toast.error('End date must be after start date');
+          return;
+        }
+
+        if (!formData.banReason) {
+          toast.error('Please enter a ban reason');
+          return;
+        }
+
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/shops/${id}/ban`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: new Date(formData.banFrom).toISOString(),
+            to: new Date(formData.banTo).toISOString(),
+            reason: formData.banReason
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || 'Failed to ban shop');
+        }
+
+        const updatedShop = await response.json();
+        setShop(updatedShop);
+        toast.success(`Shop banned until ${new Date(formData.banTo).toLocaleDateString()}`);
+        setModalState({ ...modalState, ban: false });
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchShopWithProducts();
+  }, [fetchShopWithProducts]);
+
+  if (loading) {
     return (
-        <div className="w-full bg-base-200 dark:bg-gray-800 flex items-center justify-center p-4 sm:p-6">
-            <div className="card w-full max-w-[90%] sm:max-w-[100%] bg-base-350 dark:bg-gray-900 shadow-lg rounded-xl p-6 sm:p-8 flex flex-col">
-                <button
-                    className="btn btn-outline btn-success text-base-350 dark:text-primary-dark hover:bg-success hover:text-white dark:hover:bg-gray-700 mb-4 text-base flex items-center gap-2 self-start"
-                    onClick={() => navigate(-1)}
-                    aria-label="Go back to shop list"
-                >
-                    <MdArrowBack size={20} /> Back
-                </button>
-
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8 flex-1 mb-5">
-                    <img
-                        src={shop.logotype || defaultLogo}
-                        alt={`${shop.shopname} logo`}
-                        className="w-28 h-28 sm:w-32 sm:h-32 object-contain rounded-full border border-base-200 dark:border-gray-700 p-2 shadow-sm"
-                    />
-                    <div className="flex-1">
-                        <h1 className="text-2xl sm:text-3xl font-semibold text-base-350 dark:text-gray-100 mb-4">{shop.shopname}</h1>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="text-sm mt-2">
-                                <strong className="text-base-350 dark:text-gray-200 font-medium">Description:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1 text-xs">{shop.description || 'No description provided'}</p>
-                            </div>
-                            <div className="text-sm mt-2">
-                                <strong className="text-base-350 dark:text-gray-200 font-medium">Address:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1 text-xs">{shop.address || 'Not set'}</p>
-                            </div>
-                            <div className="text-sm mt-2">
-                                <strong className="text-base-350 dark:text-gray-200 font-medium">Location:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1 text-xs">
-                                    {shop.location ? `${shop.location.lat}, ${shop.location.lon}` : 'Not set'}
-                                </p>
-                            </div>
-                            <div className="text-sm mt-2">
-                                <strong className="text-base-350 dark:text-gray-200 font-medium">Status:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1 capitalize text-xs">{shop.status || 'Active'}</p>
-                            </div>
-                            <div className="text-sm mt-2">
-                                <strong className="text-base-350 dark:text-gray-200 font-medium">Tariff Plan:</strong>
-                                <p className="text-base-350 dark:text-gray-300 mt-1 capitalize text-xs">{shop.TariffPlan || 'basic'}</p>
-                            </div>
-                            <div className="text-sm mt-2 flex flex-col">
-                                <strong className="text-base-350 dark:text-gray-200 font-medium">Owner Info:</strong>
-                                <div className="relative inline-block text-xs mt-1">
-                                    <span className="cursor-pointer group relative inline-block text-base-350 dark:text-gray-300 underline">
-                                        View Owner Info
-                                        <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 hidden group-hover:flex bg-base-200 dark:bg-gray-900 p-4 rounded-xl shadow-xl w-96 flex-col text-left">
-                                            <h3 className="font-bold text-info mb-3 text-lg">Owner Information</h3>
-                                            {shop.owner ? (
-                                                <div className="space-y-4 p-4">
-                                                    <div className="flex">
-                                                        <span className="w-20 font-semibold">Username:</span>
-                                                        <span>{shop.owner.username || 'N/A'}</span>
-                                                    </div>
-                                                    <div className="flex">
-                                                        <span className="w-20 font-semibold">Email:</span>
-                                                        <a href={`mailto:${shop.owner.email}`} className="text-blue-600 hover:underline">
-                                                            {shop.owner.email || 'N/A'}
-                                                        </a>
-                                                    </div>
-                                                    <div className="flex">
-                                                        <span className="w-20 font-semibold">Store:</span>
-                                                        <span>{shop.owner.storeName || 'N/A'}</span>
-                                                    </div>
-                                                    <div className="flex">
-                                                        <span className="w-20 font-semibold">Desc:</span>
-                                                        <p className="flex-1">{shop.owner.storeDescription || 'No description provided'}</p>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <p className="text-center py-4 text-gray-500">No owner assigned</p>
-                                            )}
-
-                                        </div>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="divider my-4 sm:my-6 border-gray-200 dark:border-gray-700" />
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mt-3">
-                    <div>
-                        <p className="font-semibold text-base-350 dark:text-gray-100 mb-2">{shop.commission || '10%'}</p>
-                        <p className="text-sm text-base-350 dark:text-gray-300">Commission</p>
-                    </div>
-                    <div>
-                        <p className="font-semibold text-base-350 dark:text-gray-100 mb-2">{shop.sales || '0'}</p>
-                        <p className="text-sm text-base-350 dark:text-gray-300">Sales</p>
-                    </div>
-                    <div>
-                        <p className="font-semibold text-base-350 dark:text-gray-100 mb-2">{shop.balance || '0'}</p>
-                        <p className="text-sm text-base-350 dark:text-gray-300">Balance</p>
-                    </div>
-                    <div>
-                        <p className="font-semibold text-base-350 dark:text-gray-100 mb-2">{shop.withdraw || '0'}</p>
-                        <p className="text-sm text-base-350 dark:text-gray-300">Withdraw</p>
-                    </div>
-                </div>
-
-                <div className="flex justify-end mt-4 sm:mt-6 gap-3">
-                    <button
-                        className="btn btn-outline btn-success text-sm flex items-center gap-2 hover:bg-success hover:text-white transition-colors"
-                        onClick={() => setShowBanModal(true)}
-                        disabled={deleteLoading}
-                        aria-label={`Ban ${shop.shopname}`}
-                    >
-                        <FaBan size={15} /> Ban
-                    </button>
-                    <button
-                        className="btn btn-outline btn-warning text-sm flex items-center gap-2 hover:bg-warning hover:text-white transition-colors"
-                        onClick={() => setShowEditModal(true)}
-                        disabled={deleteLoading}
-                        aria-label={`Edit ${shop.shopname}`}
-                    >
-                        <MdEdit size={15} /> Edit
-                    </button>
-                    <button
-                        className="btn btn-outline btn-error text-sm flex items-center gap-2 hover:bg-error hover:text-white transition-colors"
-                        onClick={() => setShowDeleteModal(true)}
-                        disabled={deleteLoading}
-                        aria-label={`Delete ${shop.shopname}`}
-                    >
-                        <MdDelete size={15} /> Delete
-                    </button>
-                </div>
-
-                {showEditModal && (
-                    <div
-                        className="modal modal-open fixed inset-0 bg-base-200 bg-opacity-50 flex items-center justify-center z-50"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="edit-modal-title"
-                    >
-                        <div className="modal-box w-full max-w-lg sm:max-w-xl bg-base-350 dark:bg-gray-900 rounded-lg shadow-xl p-6 h-auto max-h-[90vh] overflow-auto">
-                            <h3 id="edit-modal-title" className="text-xl font-semibold text-base-350 dark:text-gray-100 mb-4">
-                                Edit Shop
-                            </h3>
-                            <div className="space-y-4">
-                                <div>
-                                    <label
-                                        className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
-                                        htmlFor="edit-logotype"
-                                    >
-                                        Logo URL
-                                    </label>
-                                    <input
-                                        id="edit-logotype"
-                                        type="text"
-                                        className={`input input-bordered w-full text-sm ${errors.logotype ? 'input-error' : ''}`}
-                                        placeholder="https://your-logo-url.com/image.png"
-                                        value={editFormData.logotype}
-                                        onChange={(e) => setEditFormData({ ...editFormData, logotype: e.target.value })}
-                                    />
-                                    {errors.logotype && <p className="text-error text-xs mt-1">{errors.logotype}</p>}
-                                </div>
-                                <div>
-                                    <label
-                                        className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
-                                        htmlFor="edit-shopname"
-                                    >
-                                        Shop Name
-                                    </label>
-                                    <input
-                                        id="edit-shopname"
-                                        type="text"
-                                        className={`input input-bordered w-full text-sm ${errors.shopname ? 'input-error' : ''}`}
-                                        placeholder="Shop Name"
-                                        value={editFormData.shopname}
-                                        onChange={(e) => setEditFormData({ ...editFormData, shopname: e.target.value })}
-                                    />
-                                    {errors.shopname && <p className="text-error text-xs mt-1">{errors.shopname}</p>}
-                                </div>
-                                <div>
-                                    <label
-                                        className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
-                                        htmlFor="edit-address"
-                                    >
-                                        Address
-                                    </label>
-                                    <input
-                                        id="edit-address"
-                                        type="text"
-                                        className={`input input-bordered w-full text-sm ${errors.address ? 'input-error' : ''}`}
-                                        placeholder="Address"
-                                        value={editFormData.address}
-                                        onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
-                                    />
-                                    {errors.address && <p className="text-error text-xs mt-1">{errors.address}</p>}
-                                </div>
-                                <div>
-                                    <label
-                                        className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
-                                        htmlFor="edit-description"
-                                    >
-                                        Description
-                                    </label>
-                                    <textarea
-                                        id="edit-description"
-                                        className="textarea textarea-bordered w-full text-sm h-20"
-                                        placeholder="Description"
-                                        value={editFormData.description}
-                                        onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label
-                                            className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
-                                            htmlFor="edit-lat"
-                                        >
-                                            Latitude
-                                        </label>
-                                        <input
-                                            id="edit-lat"
-                                            type="text"
-                                            className={`input input-bordered w-full text-sm ${errors.lat ? 'input-error' : ''}`}
-                                            placeholder="41.3111"
-                                            value={editFormData.location.lat}
-                                            onChange={(e) =>
-                                                setEditFormData({
-                                                    ...editFormData,
-                                                    location: { ...editFormData.location, lat: e.target.value },
-                                                })
-                                            }
-                                        />
-                                        {errors.lat && <p className="text-error text-xs mt-1">{errors.lat}</p>}
-                                    </div>
-                                    <div>
-                                        <label
-                                            className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
-                                            htmlFor="edit-lon"
-                                        >
-                                            Longitude
-                                        </label>
-                                        <input
-                                            id="edit-lon"
-                                            type="text"
-                                            className={`input input-bordered w-full text-sm ${errors.lon ? 'input-error' : ''}`}
-                                            placeholder="69.2797"
-                                            value={editFormData.location.lon}
-                                            onChange={(e) =>
-                                                setEditFormData({
-                                                    ...editFormData,
-                                                    location: { ...editFormData.location, lon: e.target.value },
-                                                })
-                                            }
-                                        />
-                                        {errors.lon && <p className="text-error text-xs mt-1">{errors.lon}</p>}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label
-                                        className="block text-sm font-medium text-base-350 dark:text-gray-200 mb-1"
-                                        htmlFor="edit-tariff"
-                                    >
-                                        Tariff Plan
-                                    </label>
-                                    <select
-                                        id="edit-tariff"
-                                        className="select select-bordered w-full text-sm"
-                                        value={editFormData.TariffPlan}
-                                        onChange={(e) => setEditFormData({ ...editFormData, TariffPlan: e.target.value })}
-                                    >
-                                        <option value="basic">Basic</option>
-                                        <option value="standard">Standard</option>
-                                        <option value="premium">Premium</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="modal-action mt-6 flex justify-end gap-3">
-                                <button
-                                    className="btn btn-outline btn-error text-sm hover:bg-error hover:text-white"
-                                    onClick={() => setShowEditModal(false)}
-                                    aria-label="Cancel"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className={`btn btn-outline btn-primary text-sm hover:bg-primary-dark ${loading ? 'loading' : ''}`}
-                                    onClick={handleEditShop}
-                                    disabled={loading || !token}
-                                    aria-label="Save Changes"
-                                    aria-disabled={loading || !token}
-                                >
-                                    {loading ? 'Saving...' : 'Save Changes'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {showDeleteModal && (
-                    <div
-                        className="modal modal-open fixed inset-0 bg-base-200 bg-opacity-50 flex items-center justify-center z-50"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="delete-modal-title"
-                    >
-                        <div className="modal-box bg-base-350 dark:bg-gray-900 rounded-lg shadow-xl p-6 w-full max-w-md">
-                            <h3 id="delete-modal-title" className="font-bold text-lg text-error">
-                                Delete Shop
-                            </h3>
-                            <p className="py-4 text-base-350 dark:text-gray-300">
-                                Are you sure you want to delete <span className="font-semibold">{shop.shopname}</span>? This action cannot be undone.
-                            </p>
-                            <div className="modal-action mt-2 flex justify-end gap-3">
-                                <button
-                                    className="btn btn-outline btn-sm"
-                                    onClick={() => setShowDeleteModal(false)}
-                                    disabled={deleteLoading}
-                                    aria-label="Cancel"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className={`btn btn-error btn-sm ${deleteLoading ? 'loading' : ''}`}
-                                    onClick={handleDeleteShop}
-                                    disabled={deleteLoading}
-                                    aria-label="Delete"
-                                    aria-disabled={deleteLoading}
-                                >
-                                    {deleteLoading ? 'Deleting...' : 'Delete'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {showBanModal && (
-                    <div
-                        className="modal modal-open fixed inset-0 bg-base-200 bg-opacity-50 flex items-center justify-center z-50"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="ban-modal-title"
-                    >
-                        <div className="modal-box bg-base-350 dark:bg-gray-900 rounded-lg shadow-xl p-6 w-full max-w-md">
-                            <h3 id="ban-modal-title" className="font-bold text-lg text-warning">
-                                Ban Shop
-                            </h3>
-                            <p className="py-4 text-base-350 dark:text-gray-300">
-                                Are you sure you want to ban <span className="font-semibold">{shop.shopname}</span>? This action cannot be undone.
-                            </p>
-
-                            <div className="py-4">
-                                <label htmlFor="ban-from" className="block text-base-350 dark:text-gray-300">Ban From:</label>
-                                <input
-                                    type="datetime-local"
-                                    id="ban-from"
-                                    value={banFormData.from}
-                                    onChange={(e) => setBanFormData({ ...banFormData, from: e.target.value })}
-                                    className="input input-bordered w-full"
-                                />
-                            </div>
-
-                            <div className="py-4">
-                                <label htmlFor="ban-to" className="block text-base-350 dark:text-gray-300">Ban Until:</label>
-                                <input
-                                    type="datetime-local"
-                                    id="ban-to"
-                                    value={banFormData.to}
-                                    onChange={(e) => setBanFormData({ ...banFormData, to: e.target.value })}
-                                    className="input input-bordered w-full"
-                                />
-                            </div>
-
-                            <div className="py-4">
-                                <label htmlFor="ban-reason" className="block text-base-350 dark:text-gray-300">Reason:</label>
-                                <textarea
-                                    id="ban-reason"
-                                    value={banFormData.reason}
-                                    onChange={(e) => setBanFormData({ ...banFormData, reason: e.target.value })}
-                                    className="textarea textarea-bordered w-full"
-                                    rows={3}
-                                />
-                            </div>
-
-                            <div className="modal-action mt-2 flex justify-end gap-3">
-                                <button
-                                    className="btn btn-outline btn-sm"
-                                    onClick={() => setShowBanModal(false)}
-                                    disabled={deleteLoading}
-                                    aria-label="Cancel"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className={`btn btn-warning btn-sm ${deleteLoading ? 'loading' : ''}`}
-                                    onClick={handleBanShop}
-                                    disabled={deleteLoading}
-                                    aria-label="Ban"
-                                    aria-disabled={deleteLoading}
-                                >
-                                    {deleteLoading ? 'Banning...' : 'Ban'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-            </div>
+      <div className="fixed inset-0 flex items-center justify-center bg-base-100/80 backdrop-blur-sm z-50">
+        <div className="flex flex-col items-center gap-4">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="text-lg font-medium">Loading Shop Details</p>
         </div>
+      </div>
     );
+  }
+
+  if (!shop) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center p-8 bg-base-100 rounded-box shadow-lg max-w-md">
+          <div className="text-5xl mb-4">🛍️</div>
+          <h2 className="text-2xl font-bold mb-2">Shop Not Found</h2>
+          <p className="mb-6 text-base-content/70">The shop you're looking for doesn't exist or may have been removed.</p>
+          <button className="btn btn-primary w-full" onClick={() => navigate('/shops')}>
+            Back to Shops
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-base-100 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <button className="btn btn-ghost hover:bg-base-200 flex items-center gap-2" onClick={() => navigate(-1)}>
+            <MdArrowBack size={18} />
+            <span>Back</span>
+          </button>
+          <div className="text-sm breadcrumbs bg-base-200 px-4 py-2 rounded-lg">
+            <ul>
+              <li><a onClick={() => navigate('/dashboard')}>Dashboard</a></li>
+              <li><a onClick={() => navigate('/shops')}>Shops</a></li>
+              <li className="text-primary font-medium">{shop.shopname}</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Banner section */}
+        <div className="relative w-full h-64 rounded-box overflow-hidden">
+          <img
+            src={shop.banner || defaultBanner}
+            alt="Shop banner"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = defaultBanner;
+            }}
+          />
+          <button
+            className="absolute bottom-4 right-4 btn btn-sm btn-primary flex items-center gap-2"
+            onClick={() => setModalState({ ...modalState, banner: true })}
+          >
+            <MdImage size={16} />
+            <span>Change Banner</span>
+          </button>
+        </div>
+
+        {/* Main shop card */}
+        <div className="card bg-base-100 shadow-xl overflow-hidden border border-base-200">
+          <div className="bg-gradient-to-r from-primary to-secondary p-6 text-primary-content">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="avatar">
+                <div className="w-24 rounded-full ring ring-primary-content ring-offset-base-100 ring-offset-2">
+                  <img
+                    src={shop.logotype || defaultLogo}
+                    alt={shop.shopname}
+                    onError={(e) => {
+                      e.target.src = defaultLogo;
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h1 className="text-3xl font-bold">{shop.shopname}</h1>
+                <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
+                  <div className="badge badge-lg badge-primary-content/90 gap-1">
+                    <SiGooglemaps size={14} />
+                    <span>{shop.address || 'No address'}</span>
+                  </div>
+                  <div className="badge badge-lg badge-primary gap-1">
+                    <GiReceiveMoney size={14} />
+                    <span>{shop.TariffPlan || 'basic'}</span>
+                  </div>
+                  <div className="badge badge-lg badge-secondary gap-1">
+                    <MdInventory size={14} />
+                    <span>{products.length} products</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Owner Information */}
+            {shop.owner && (
+              <div className="flex items-start gap-3">
+                <MdPerson className="text-primary mt-1 text-xl" />
+                <div>
+                  <h3 className="text-lg font-semibold text-primary">Owner</h3>
+                  <p className="text-base-content/70">
+                    {shop.owner.username || 'Unknown'} ({shop.owner.email})
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            <div className="flex items-start gap-3">
+              <BsInfoCircle className="text-primary mt-1" />
+              <div>
+                <h3 className="text-lg font-semibold text-primary">Description</h3>
+                <p className="text-base-content/70">{shop.description || 'No description provided'}</p>
+              </div>
+            </div>
+
+            {/* Products Preview */}
+            {products.length > 0 && (
+              <div className="flex items-start gap-3">
+                <MdInventory className="text-primary mt-1" />
+                <div>
+                  <h3 className="text-lg font-semibold text-primary">Products ({products.length})</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                    {products.slice(0, 6).map(product => (
+                      <div key={product._id} className="bg-base-200 p-2 rounded-box">
+                        <p className="font-medium truncate">{product?.name}</p>
+                        <p className="text-sm text-primary ">$ {product?.cost?.sellingPrice || 300}</p>
+                      </div>
+                    ))}
+                    {products.length > 6 && (
+                      <div className="bg-base-200 p-2 rounded-box flex items-center justify-center">
+                        <p className="text-sm">+{products.length - 6} more</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-3 justify-end pt-4 border-t border-base-200">
+              <button
+                className="btn btn-warning flex items-center gap-2"
+                onClick={() => setModalState({ ...modalState, ban: true })}
+                disabled={actionLoading}
+              >
+                <FaBan size={16} />
+                <span>Ban Shop</span>
+              </button>
+              <button
+                className="btn btn-primary flex items-center gap-2"
+                onClick={() => setModalState({ ...modalState, edit: true })}
+                disabled={actionLoading}
+              >
+                <MdEdit size={16} />
+                <span>Edit Shop</span>
+              </button>
+              <button
+                className="btn btn-error flex items-center gap-2"
+                onClick={() => setModalState({ ...modalState, delete: true })}
+                disabled={actionLoading}
+              >
+                <MdDelete size={16} />
+                <span>Delete Shop</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Banner Modal */}
+      {modalState.banner && (
+        <div className="fixed inset-0  bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Update Shop Banner</h2>
+                <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setModalState({ ...modalState, banner: false })}>
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Banner URL</span>
+                  </label>
+                  <div className="relative">
+                    <BsImages className="absolute inset-y-0 left-0 flex items-center pl-3" />
+                    <input
+                      type="text"
+                      className="input input-bordered w-full pl-10"
+                      value={formData.banner}
+                      onChange={(e) => setFormData({ ...formData, banner: e.target.value })}
+                      placeholder="https://example.com/banner.jpg"
+                    />
+                  </div>
+                </div>
+                <div className="aspect-video bg-base-200 rounded-box flex items-center justify-center overflow-hidden">
+                  {formData.banner ? (
+                    <img
+                      src={formData.banner}
+                      alt="Banner preview"
+                      className="object-cover w-full h-full"
+                      onError={(e) => {
+                        e.target.src = defaultBanner;
+                      }}
+                    />
+                  ) : (
+                    <span className="text-base-content/50">Banner preview will appear here</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button className="btn btn-ghost" onClick={() => setModalState({ ...modalState, banner: false })}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleShopAction('banner')}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Updating...' : 'Update Banner'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Shop Modal */}
+      {modalState.edit && (
+        <div className="fixed inset-0  bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Edit Shop</h2>
+                <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setModalState({ ...modalState, edit: false })}>
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Shop Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full"
+                    value={formData.shopname}
+                    onChange={(e) => setFormData({ ...formData, shopname: e.target.value })}
+                    placeholder="Enter shop name"
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Address</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Enter shop address"
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Description</span>
+                  </label>
+                  <textarea
+                    className="textarea textarea-bordered w-full"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Enter shop description"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button className="btn btn-ghost" onClick={() => setModalState({ ...modalState, edit: false })}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleShopAction('edit')}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {modalState.ban && (
+        <div className="fixed inset-0  bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Ban Shop</h2>
+                <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setModalState({ ...modalState, ban: false })}>
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Ban From</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="input input-bordered w-full"
+                    value={formData.banFrom}
+                    onChange={(e) => setFormData({ ...formData, banFrom: e.target.value })}
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Ban To</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="input input-bordered w-full"
+                    value={formData.banTo}
+                    onChange={(e) => setFormData({ ...formData, banTo: e.target.value })}
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Ban Reason</span>
+                  </label>
+                  <textarea
+                    className="textarea textarea-bordered w-full"
+                    value={formData.banReason}
+                    onChange={(e) => setFormData({ ...formData, banReason: e.target.value })}
+                    placeholder="Enter ban reason"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button className="btn btn-ghost" onClick={() => setModalState({ ...modalState, ban: false })}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-warning"
+                  onClick={() => handleShopAction('ban')}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Banning...' : 'Ban Shop'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalState.delete && (
+        <div className="fixed inset-0 bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                  <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium mt-3">Delete Shop</h3>
+                <div className="mt-2 text-sm text-base-500">
+                  <p>Are you sure you want to delete this shop? This action cannot be undone.</p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button className="btn btn-ghost" onClick={() => setModalState({ ...modalState, delete: false })}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-error"
+                  onClick={() => handleShopAction('delete')}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default ShopDetail;

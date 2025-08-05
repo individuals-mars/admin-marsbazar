@@ -4,10 +4,9 @@ import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import {
-  FiArrowLeft, FiPlus, FiPackage, FiTrendingUp,
-  FiAlertCircle, FiEdit, FiTrash2, FiBarChart2,
-  FiDollarSign, FiShoppingBag, FiClock, FiChevronLeft,
-  FiChevronRight, FiSearch, FiX
+  FiArrowLeft, FiPlus, FiBarChart2, FiAlertCircle,
+  FiSearch, FiX, FiPackage, FiTrendingUp, FiShoppingBag,
+  FiEdit, FiChevronLeft, FiChevronRight
 } from 'react-icons/fi';
 import { Line } from 'react-chartjs-2';
 import {
@@ -37,15 +36,17 @@ const Inventory = () => {
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.user);
   const [products, setProducts] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalType, setModalType] = useState('');
-  const [inventoryHistory, setInventoryHistory] = useState([]);
   const [stockSummary, setStockSummary] = useState({});
   const [predictionData, setPredictionData] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
-  const deleteModalRef = useRef(null);
+  const [allStockMovements, setAllStockMovements] = useState([]);
+  const quantityRef = useRef(null);
+  const notesRef = useRef(null);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -72,26 +73,33 @@ const Inventory = () => {
     }
   };
 
+
+
+  const fetchLowStockProducts = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/products/low-stock`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setLowStockProducts(response.data.data);
+    } catch (error) {
+      toast.error('Failed to load low stock products');
+      console.error('API Error:', error);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchLowStockProducts();
   }, [pagination.current, pagination.pageSize, searchQuery]);
 
-  const openModal = (type, product = null) => {
+  const openModal = (type, product) => {
     setModalType(type);
     setSelectedProduct(product);
 
-    switch (type) {
-      case 'history':
-        fetchInventoryHistory(product._id);
-        break;
-      case 'summary':
-        fetchStockSummary(product._id);
-        break;
-      case 'predict':
-        fetchStockPrediction(product._id);
-        break;
-      default:
-        break;
+    if (type === 'summary') {
+      fetchStockSummary(product._id);
+    } else if (type === 'predict') {
+      fetchStockPrediction(product._id);
     }
   };
 
@@ -100,27 +108,23 @@ const Inventory = () => {
     setSelectedProduct(null);
   };
 
-  const fetchInventoryHistory = async (productId) => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/products/${productId}/inventory-history`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setInventoryHistory(response.data.history);
-    } catch (error) {
-      toast.error('Failed to load inventory history');
-    }
-  };
-
+  // Fetch stock summary
   const fetchStockSummary = async (productId) => {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/products/${productId}/stock-summary`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // Validate response structure
+      if (!response.data || typeof response.data.currentStock === 'undefined') {
+        throw new Error('Invalid stock summary data structure');
+      }
+
       setStockSummary(response.data);
     } catch (error) {
-      toast.error('Failed to load stock summary');
+      toast.error(error.response?.data?.message || 'Failed to load stock summary');
+      console.error('Stock Summary Error:', error);
     }
   };
 
@@ -130,44 +134,47 @@ const Inventory = () => {
         `${import.meta.env.VITE_BACKEND_URL}/api/products/${productId}/predict`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // Validate required fields
+      if (!response.data || typeof response.data.currentStock === 'undefined') {
+        throw new Error('Invalid prediction data structure');
+      }
+
       setPredictionData(response.data);
     } catch (error) {
-      toast.error('Failed to generate stock prediction');
+      const errorMessage = error.response?.data?.message ||
+        (error.response?.status === 404
+          ? 'Prediction data not available for this product'
+          : 'Failed to generate stock prediction');
+
+      toast.error(errorMessage);
+      console.error('Prediction Error:', error);
     }
   };
 
-  const handleAddInventory = async (values) => {
+  const handleAddInventory = async () => {
     try {
       await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/products/${selectedProduct._id}/inventory`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/inventory/add-stock/${selectedProduct._id}`,
         {
-          quantity: values.quantity,
-          notes: values.notes,
-          type: 'incoming'
+          quantity: parseInt(quantityRef.current.value, 10),
+          notes: notesRef.current.value
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
+
       toast.success('Inventory updated successfully');
       fetchProducts();
+      fetchLowStockProducts();
       closeModal();
     } catch (error) {
+      console.error('Inventory Error:', error);
       toast.error('Failed to update inventory');
     }
   };
 
-  const deleteProduct = async () => {
-    try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/products/${selectedProduct._id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success('Product deleted successfully');
-      fetchProducts();
-      closeModal();
-    } catch (error) {
-      toast.error('Failed to delete product');
-    }
-  };
 
   const productColumns = [
     {
@@ -176,13 +183,12 @@ const Inventory = () => {
       key: 'name',
       render: (text, record) => (
         <div className="flex items-center">
-          {record.images?.[0] && (
-            <img
-              src={record.images[0]}
-              alt={record.name}
-              className="w-10 h-10 rounded-md object-cover mr-3"
-            />
-          )}
+          <img
+            src={record.images?.[0] || '/default-product.png'}
+            alt={record.name}
+            className="w-10 h-10 rounded-md object-cover mr-3"
+          />
+
           <span>{text}</span>
         </div>
       ),
@@ -220,13 +226,6 @@ const Inventory = () => {
             <FiPlus size={14} />
           </button>
           <button
-            className="btn btn-xs btn-info"
-            onClick={() => openModal('history', record)}
-            title="View history"
-          >
-            <FiClock size={14} />
-          </button>
-          <button
             className="btn btn-xs btn-secondary"
             onClick={() => openModal('summary', record)}
             title="View summary"
@@ -240,48 +239,11 @@ const Inventory = () => {
           >
             <FiAlertCircle size={14} />
           </button>
-          <button
-            className="btn btn-xs btn-error"
-            onClick={() => {
-              setSelectedProduct(record);
-              deleteModalRef.current.showModal();
-            }}
-            title="Delete product"
-          >
-            <FiTrash2 size={14} />
-          </button>
-        </div>
-      ),
-    },
-  ];
 
-  const historyColumns = [
-    {
-      title: 'Date',
-      dataIndex: 'date',
-      key: 'date',
-      render: (date) => new Date(date).toLocaleString(),
-    },
-    {
-      title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
-      render: (type) => (
-        <div className={`badge ${type === 'incoming' ? 'badge-success' : 'badge-error'}`}>
-          {type.toUpperCase()}
+         
+
         </div>
       ),
-    },
-    {
-      title: 'Quantity',
-      dataIndex: 'quantity',
-      key: 'quantity',
-    },
-    {
-      title: 'Notes',
-      dataIndex: 'notes',
-      key: 'notes',
-      render: (text) => text || '—',
     },
   ];
 
@@ -305,6 +267,36 @@ const Inventory = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {lowStockProducts.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-bold mb-4 text-error">Low Stock Products</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {lowStockProducts.map((product) => (
+              <div key={product._id} className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                  <h3 className="card-title">{product.name}</h3>
+                  <p>Stock: <span className="text-error">{product.stock} units</span></p>
+                  <div className="card-actions justify-end">
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => openModal('add', product)}
+                    >
+                      Add Stock
+                    </button>
+                    <button
+                      className="btn btn-warning btn-sm"
+                      onClick={() => openModal('predict', product)}
+                    >
+                      View Prediction
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center">
           <button
@@ -417,20 +409,14 @@ const Inventory = () => {
                 <FiX />
               </button>
             </div>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleAddInventory({
-                quantity: e.target.quantity.value,
-                notes: e.target.notes.value
-              });
-            }}>
+            <div>
               <div className="form-control mb-4">
                 <label className="label">
                   <span className="label-text font-medium">Quantity to Add</span>
                 </label>
                 <input
                   type="number"
-                  name="quantity"
+                  ref={quantityRef}
                   className="input input-bordered w-full"
                   min="1"
                   required
@@ -441,7 +427,7 @@ const Inventory = () => {
                   <span className="label-text font-medium">Notes</span>
                 </label>
                 <textarea
-                  name="notes"
+                  ref={notesRef}
                   className="textarea textarea-bordered w-full"
                   rows="3"
                   placeholder="Additional information about this inventory update"
@@ -451,54 +437,14 @@ const Inventory = () => {
                 <button type="button" className="btn" onClick={closeModal}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleAddInventory}
+                >
                   Submit
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {modalType === 'history' && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-4xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg">
-                Inventory History - {selectedProduct?.name}
-              </h3>
-              <button onClick={closeModal} className="btn btn-sm btn-ghost">
-                <FiX />
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="table w-full">
-                <thead>
-                  <tr className="bg-base-200">
-                    {historyColumns.map((column) => (
-                      <th key={column.key} className="font-bold">{column.title}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {inventoryHistory.map((record, index) => (
-                    <tr key={index} className="hover:bg-base-200">
-                      {historyColumns.map((column) => (
-                        <td key={column.key}>
-                          {column.render
-                            ? column.render(record[column.dataIndex], record)
-                            : record[column.dataIndex]}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="modal-action">
-              <button className="btn" onClick={closeModal}>
-                Close
-              </button>
             </div>
           </div>
         </div>
@@ -636,7 +582,7 @@ const Inventory = () => {
               <div className="stats shadow bg-base-100">
                 <div className="stat">
                   <div className="stat-figure text-info">
-                    <FiClock size={24} />
+                    <FiEdit size={24} />
                   </div>
                   <div className="stat-title">Recommended Reorder</div>
                   <div className="stat-value">
@@ -660,25 +606,6 @@ const Inventory = () => {
           </div>
         </div>
       )}
-
-      <dialog ref={deleteModalRef} className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg text-error">Delete Product</h3>
-          <p className="py-4">
-            Are you sure you want to delete <span className="font-semibold">{selectedProduct?.name}</span>? This action cannot be undone.
-          </p>
-          <div className="modal-action">
-            <form method="dialog" className="flex gap-2">
-              <button className="btn" onClick={closeModal}>
-                Cancel
-              </button>
-              <button className="btn btn-error" onClick={deleteProduct}>
-                Delete
-              </button>
-            </form>
-          </div>
-        </div>
-      </dialog>
     </div>
   );
 };
